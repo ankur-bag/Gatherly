@@ -40,5 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.copilot-instructions.md
-.PRD.md
+PRD.md
+copilot-instructions.md
+
+.github
