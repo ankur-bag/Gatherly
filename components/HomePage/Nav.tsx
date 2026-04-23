@@ -67,7 +67,7 @@ export function Nav({ isSignedIn }: NavProps) {
                 A
               </div>
               <span
-                className="text-lg font-medium tracking-tight text-charcoal"
+                className="text-3xl tracking-tight text-charcoal"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 Avento
@@ -114,7 +114,7 @@ export function Nav({ isSignedIn }: NavProps) {
                 <div className="flex items-center gap-2">
                   <SignInButton mode="modal">
                     <button className="text-[11px] font-bold uppercase tracking-[0.2em] text-charcoal hover:text-orange transition-colors px-4 py-2 cursor-pointer transition-all active:scale-95">
-                      Log in
+                      Signin
                     </button>
                   </SignInButton>
                   <SignUpButton mode="modal">

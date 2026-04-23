@@ -63,7 +63,7 @@ export function Hero({ isSignedIn }: HeroProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-xl sm:text-2xl text-charcoal/50 leading-relaxed max-w-[45ch] text-balance mb-14 font-medium"
+            className="text-xl sm:text-2xl text-charcoal/50 leading-relaxed max-w-[45ch] text-balance mb-14 "
           >
             A high-fidelity command center for organizers who can't afford chaos. 
             The silent partner in high-stakes event operations.
