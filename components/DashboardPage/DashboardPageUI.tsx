@@ -5,10 +5,12 @@ import { StatusBadge, ZoomSyncBadge } from '@/components/StatusBadges'
 import { IEvent } from '@/types'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { FiCalendar, FiEdit2, FiEye, FiPlus, FiUsers } from 'react-icons/fi'
+import { FiCalendar, FiEdit2, FiEye, FiPlus, FiUsers, FiArrowLeft } from 'react-icons/fi'
 
 export function DashboardPageUI() {
+  const router = useRouter()
   const { isLoaded } = useAuth()
   const [events, setEvents] = useState<IEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,6 +93,15 @@ export function DashboardPageUI() {
   return (
     <DashboardLayout>
       <div className="animate-reveal space-y-10">
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-2 text-sm font-bold text-charcoal/60 hover:text-charcoal transition-colors mb-2 group cursor-pointer"
+        >
+          <FiArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
+          Go Back
+        </button>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8 pb-8 border-b border-charcoal/5">
           <div>

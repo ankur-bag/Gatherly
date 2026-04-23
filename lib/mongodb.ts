@@ -20,6 +20,7 @@ export async function dbConnect() {
   if (!cached.mongoose.promise) {
     const opts = {
       bufferCommands: false,
+      family: 4, // Force IPv4
     }
 
     cached.mongoose.promise = mongoose

@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "Avento — The Event Management Platform",
   description:
     "Connects every step from RSVP to revenue, delivering clear reports and next-best actions to improve ROI by 20-35%",
+  icons: {
+    icon: "/avento.svg",
+  },
 };
 
 export default function RootLayout({

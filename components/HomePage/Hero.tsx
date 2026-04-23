@@ -33,7 +33,7 @@ export function Hero({ isSignedIn }: HeroProps) {
       <div className="section-container relative z-10">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto mb-16 lg:mb-20 xl:mb-24">
           {/* Badge */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -41,36 +41,38 @@ export function Hero({ isSignedIn }: HeroProps) {
             className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-5 py-2 backdrop-blur-sm mb-6 lg:mb-12 shadow-sm"
           >
             <span className="flex h-2 w-2 rounded-full bg-orange animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-charcoal/60">
+            <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-charcoal/60">
               The Event Operating System
             </span>
           </motion.div>
 
           {/* Massive Heading */}
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-10"
+            className="mb-10 text-7xl"
           >
             Run every event <br />
-            <span className="text-orange italic lg:text-[5.5rem] xl:text-[8.5rem] tracking-tight">Flawlessly.</span>
+            <span className="text-orange  lg:text-[5.5rem] xl:text-[7.5rem] tracking-tight">
+              Flawlessly.
+            </span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-base sm:text-lg lg:text-xl xl:text-2xl text-charcoal/50 leading-relaxed max-w-[45ch] text-balance mb-8 lg:mb-14"
           >
-            A high-fidelity command center for organizers who can't afford chaos. 
-            The silent partner in high-stakes event operations.
+            A high-fidelity command center for organizers who can't afford
+            chaos. The silent partner in high-stakes event operations.
           </motion.p>
 
           {/* CTAs */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -82,8 +84,7 @@ export function Hero({ isSignedIn }: HeroProps) {
                 href="/dashboard"
                 className="h-16 px-12 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-3 transition-all hover:bg-orange hover:shadow-[0_20px_50px_rgba(255,127,17,0.3)] hover:-translate-y-1 active:scale-95"
               >
-                ENTER COMMAND CENTER
-                <FiArrowRight size={22} />
+                Launch Event
               </Link>
             ) : (
               <>
@@ -106,20 +107,22 @@ export function Hero({ isSignedIn }: HeroProps) {
         {/* Feature Cards / Bento Preview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8">
           {trustPoints.map(({ title, description, Icon }, index) => (
-            <motion.div 
+            <motion.div
               key={title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.4 + index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              transition={{
+                duration: 0.8,
+                delay: 0.4 + index * 0.1,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               className="bento-card group"
             >
               <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange/5 text-orange transition-all duration-500 group-hover:bg-orange group-hover:text-white group-hover:scale-110">
                 <Icon size={28} />
               </div>
-              <h3 className="mb-4">
-                {title}
-              </h3>
+              <h3 className="mb-4">{title}</h3>
               <p className="text-base text-charcoal/40 leading-relaxed font-medium">
                 {description}
               </p>

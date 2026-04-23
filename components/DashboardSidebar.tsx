@@ -2,6 +2,7 @@
 
 import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { FiHome, FiSettings, FiGrid } from 'react-icons/fi'
 
@@ -22,8 +23,14 @@ export default function DashboardSidebar() {
     <aside className="fixed left-6 top-6 bottom-6 z-40 hidden w-64 flex-col glass rounded-3xl p-4 shadow-framer lg:flex">
       {/* Brand */}
       <div className="flex items-center gap-3 px-4 py-6 border-b border-black/5 mb-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-charcoal shadow-lg">
-          <span className="text-base font-bold text-white">A</span>
+        <div className="flex h-10 w-10 items-center justify-center">
+          <Image 
+            src="/avento.svg" 
+            alt="Avento Logo" 
+            width={40} 
+            height={40}
+            className="object-contain drop-shadow-sm"
+          />
         </div>
         <div className="flex flex-col">
           <p className="text-lg font-medium text-charcoal leading-none" style={{ fontFamily: 'var(--font-display)' }}>

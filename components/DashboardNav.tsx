@@ -22,6 +22,7 @@ export default function DashboardNav() {
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
       <div className="glass bg-beige/60 backdrop-blur-3xl border border-white/50 rounded-pill px-2 py-2 shadow-framer flex items-center gap-2">
+
         {/* Navigation Items */}
         <div className="flex items-center gap-1 bg-charcoal/5 rounded-full p-1">
           {navItems.map(({ href, label, Icon }) => (

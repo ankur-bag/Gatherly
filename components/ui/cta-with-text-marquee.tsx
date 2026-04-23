@@ -148,7 +148,7 @@ export default function CTAWithVerticalMarquee() {
             >
               <SignUpButton mode="modal">
                 <button className="h-16 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-3 transition-all hover:bg-orange hover:shadow-[0_20px_50px_rgba(255,127,17,0.3)] hover:-translate-y-1 active:scale-95 cursor-pointer">
-                  START OPERATING
+                  START LAUNCHING
                   <FiArrowRight size={22} />
                 </button>
               </SignUpButton>

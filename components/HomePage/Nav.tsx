@@ -2,6 +2,7 @@
 
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import Image from "next/image";
 import { FiMenu, FiX } from "react-icons/fi";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
@@ -63,8 +64,14 @@ export function Nav({ isSignedIn }: NavProps) {
               href="/"
               className="flex items-center gap-3 transition-all hover:opacity-70 active:scale-95"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-charcoal text-white font-bold text-sm shadow-sm">
-                A
+              <div className="flex h-9 w-9 items-center justify-center">
+                <Image 
+                  src="/avento.svg" 
+                  alt="Avento Logo" 
+                  width={36} 
+                  height={36}
+                  className="object-contain drop-shadow-sm"
+                />
               </div>
               <span
                 className="text-3xl tracking-tight text-charcoal"
