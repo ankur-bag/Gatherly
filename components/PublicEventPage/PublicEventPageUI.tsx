@@ -105,8 +105,8 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
     return (
       <PublicEventShell>
         <section className="mx-auto w-full max-w-3xl space-y-4 px-6 py-12">
-          <div className="h-12 w-1/2 animate-pulse rounded-lg bg-neutral-200" />
-          <div className="h-64 animate-pulse rounded-lg bg-neutral-200" />
+          <div className="skeleton h-12 w-1/2" />
+          <div className="skeleton mt-6 h-64 w-full" />
         </section>
       </PublicEventShell>
     )
@@ -116,7 +116,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
     return (
       <PublicEventShell>
         <section className="mx-auto w-full max-w-3xl px-6 py-16">
-          <h1 className="text-3xl font-semibold text-red-700">{error || 'Event not found'}</h1>
+          <h1 className="text-3xl font-semibold text-[#c53030]">{error || 'Event not found'}</h1>
         </section>
       </PublicEventShell>
     )
@@ -126,7 +126,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
 
   return (
     <PublicEventShell>
-      <article className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12 md:py-16">
+      <article className="animate-slideUp mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12 md:py-16">
         <PublicEventHero
           title={eventPayload.event.title}
           description={eventPayload.event.description}

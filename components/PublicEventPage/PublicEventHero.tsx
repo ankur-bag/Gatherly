@@ -7,19 +7,27 @@ interface PublicEventHeroProps {
   publicStatus: PublicStatus
 }
 
-function normalizeStatus(status: PublicStatus): string {
-  if (!status) return 'closed'
-  return status.toLowerCase()
-}
-
 export function PublicEventHero({ title, description, publicStatus }: PublicEventHeroProps) {
+  // Map public status strings to badge compatible ones
+  const displayStatus = publicStatus || 'Closed'
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="max-w-3xl text-4xl font-semibold text-foreground md:text-5xl">{title}</h1>
-        <StatusBadge status={normalizeStatus(publicStatus)} />
+    <div className="animate-reveal space-y-6">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <h1 
+          className="max-w-3xl text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-charcoal leading-[1.05]" 
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          {title}
+        </h1>
+        <div className="shrink-0">
+          {/* Ensure the status explicitly matches the badge expectations */}
+          <StatusBadge status={displayStatus as any} />
+        </div>
       </div>
-      <p className="text-lg text-neutral-600">{description}</p>
+      <p className="max-w-2xl text-lg lg:text-xl text-charcoal/50 leading-relaxed font-medium">
+        {description}
+      </p>
     </div>
   )
 }

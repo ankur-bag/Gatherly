@@ -1,47 +1,50 @@
 'use client'
 
-export function StatusBadge({ status }: { status: string }) {
-  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-    draft: { bg: 'bg-neutral-100', text: 'text-neutral-700', label: 'Draft' },
-    published: { bg: 'bg-green-100', text: 'text-green-700', label: 'Published' },
-    cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelled' },
-    open: { bg: 'bg-green-100', text: 'text-green-700', label: 'Open' },
-    full: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Full' },
-    closed: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Closed' },
-    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pending' },
-    registered: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Registered' },
-    approved: { bg: 'bg-green-100', text: 'text-green-700', label: 'Approved' },
-    rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Rejected' },
-    revoked: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Revoked' },
+export type AllStatues = 
+  | 'draft' | 'published' | 'cancelled' | 'completed' 
+  | 'pending' | 'approved' | 'rejected' | 'revoked'
+  | 'Open' | 'Full' | 'Closed'
+
+export function StatusBadge({ status }: { status: AllStatues | string }) {
+  const styles: Record<string, string> = {
+    // Event Statuses
+    draft: 'bg-black/5 text-charcoal/50 border-charcoal/10',
+    published: 'bg-green-50 text-green-600 border-green-100',
+    cancelled: 'bg-red-50 text-red-500 border-red-200',
+    completed: 'bg-blue-50 text-blue-500 border-blue-200',
+    
+    // Registration Statuses
+    pending: 'bg-orange/10 text-orange border-orange/20',
+    approved: 'bg-green-50 text-green-600 border-green-100',
+    rejected: 'bg-red-50 text-red-500 border-red-200',
+    revoked: 'bg-charcoal/10 text-charcoal/40 border-charcoal/20',
+
+    // Public Visibility Statuses
+    Open: 'bg-sage/10 text-sage border-sage/20',
+    Full: 'bg-orange/10 text-orange border-orange/20',
+    Closed: 'bg-black/5 text-charcoal/50 border-charcoal/10',
   }
 
-  const config = statusConfig[status] || statusConfig.draft
+  const normalizedStatus = status as keyof typeof styles
+  const currentStyle = styles[normalizedStatus] || styles.draft
 
   return (
-    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
-      {config.label}
+    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all ${currentStyle}`}>
+      {status}
     </span>
   )
 }
 
-export function ZoomSyncBadge({ syncStatus }: { syncStatus?: string }) {
-  if (!syncStatus) return null
-
-  const config: Record<string, { bg: string; text: string; label: string }> = {
-    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Syncing...' },
-    synced: { bg: 'bg-green-100', text: 'text-green-700', label: 'Zoom Synced' },
-    failed: { bg: 'bg-red-100', text: 'text-red-700', label: 'Sync Failed' },
-    cancelled: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Cancelled' },
+export function ZoomSyncBadge({ syncStatus }: { syncStatus: string }) {
+  const colors: Record<string, string> = {
+    pending: 'bg-orange/10 text-orange border-orange/10',
+    synced: 'bg-blue-50 text-blue-500 border-blue-100',
+    failed: 'bg-red-50 text-red-500 border-red-100',
   }
 
-  const item = config[syncStatus] || config.pending
-
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${item.bg} ${item.text}`}>
-      {syncStatus === 'pending' && <span className="animate-pulse">●</span>}
-      {syncStatus === 'synced' && <span>✓</span>}
-      {syncStatus === 'failed' && <span>✕</span>}
-      {item.label}
+    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${colors[syncStatus] || colors.pending}`}>
+      Zoom {syncStatus}
     </span>
   )
 }

@@ -1,22 +1,23 @@
-import { FiCheckCircle, FiInfo } from 'react-icons/fi'
-import { FeedbackState, PublicStatus, RegistrationFormState } from './types'
+import { FiCheckCircle, FiInfo } from "react-icons/fi";
+import { FeedbackState, PublicStatus, RegistrationFormState } from "./types";
 
 interface PublicRegistrationSectionProps {
-  publicStatus: PublicStatus
-  registered: boolean
-  registering: boolean
-  formData: RegistrationFormState
-  feedback: FeedbackState | null
-  onNameChange: (value: string) => void
-  onEmailChange: (value: string) => void
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+  publicStatus: PublicStatus;
+  registered: boolean;
+  registering: boolean;
+  formData: RegistrationFormState;
+  feedback: FeedbackState | null;
+  onNameChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }
 
 function statusMessage(status: PublicStatus): string {
-  if (status === 'Cancelled') return 'This event has been cancelled by the organizer.'
-  if (status === 'Closed') return 'This event has already ended.'
-  if (status === 'Full') return 'This event is currently full.'
-  return 'Registration is not available at this moment.'
+  if (status === "Cancelled")
+    return "This event has been cancelled by the organizer.";
+  if (status === "Closed") return "This event has already ended.";
+  if (status === "Full") return "This event is currently full.";
+  return "Registration is not available at this moment.";
 }
 
 export function PublicRegistrationSection({
@@ -31,43 +32,75 @@ export function PublicRegistrationSection({
 }: PublicRegistrationSectionProps) {
   if (registered) {
     return (
-      <section className="rounded-xl border border-green-200 bg-green-50 p-6">
-        <div className="flex items-start gap-3">
-          <FiCheckCircle className="mt-0.5 text-green-700" size={20} />
+      <section className="rounded-xl border border-[#bbf7d0]/50 bg-[#e8f5ef] p-6 lg:p-8">
+        <div className="flex items-start gap-4">
+          <FiCheckCircle className="mt-0.5 text-[#2d9d6a]" size={24} />
           <div>
-            <h2 className="text-xl font-semibold text-green-900">Registration received</h2>
-            <p className="mt-1 text-green-800">
-              {feedback?.message || 'Please check your email for your event confirmation and updates.'}
+            <h2
+              className="text-xl font-bold text-[#1d7d4f]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Registration received
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#1d7d4f]/80">
+              {feedback?.message ||
+                "Please check your email for your event confirmation and updates."}
             </p>
           </div>
         </div>
       </section>
-    )
+    );
   }
 
-  if (publicStatus !== 'Open') {
+  if (publicStatus !== "Open") {
     return (
-      <section className="rounded-xl border border-neutral-300 bg-neutral-100 p-6">
-        <div className="flex items-start gap-3">
-          <FiInfo className="mt-0.5 text-neutral-700" size={20} />
-          <p className="font-medium text-neutral-700">{statusMessage(publicStatus)}</p>
+      <section className="rounded-xl border border-[#fde68a]/50 bg-[#fef7e6] p-6 lg:p-8">
+        <div className="flex items-start gap-4">
+          <FiInfo className="mt-0.5 text-[#d4910a]" size={24} />
+          <div>
+            <h2
+              className="text-xl font-bold text-[#92640a]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Event unavailble
+            </h2>
+            <p className="mt-2 font-medium text-[#92640a]/80">
+              {statusMessage(publicStatus)}
+            </p>
+          </div>
         </div>
       </section>
-    )
+    );
   }
 
-  return (
-    <section className="rounded-xl border border-neutral-200 bg-white p-6 md:p-8">
-      <h2 className="text-2xl font-semibold text-foreground">Register for this event</h2>
+  const inputClasses =
+    "w-full rounded-lg border border-[#e5e5df] bg-[#fafaf7] px-4 py-3 text-[#262626] transition-all hover:bg-white focus:border-[#FF7F11] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FF7F11]/20";
 
-      {feedback?.kind === 'error' && (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{feedback.message}</p>
+  return (
+    <section className="rounded-xl border border-[#e5e5df] bg-white p-6 shadow-sm md:p-8 lg:p-10">
+      <h2
+        className="text-2xl font-bold text-[#262626]"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        Register for this event
+      </h2>
+      <p className="mt-2 text-sm text-[#737370]">
+        Fill out your details below to save your seat.
+      </p>
+
+      {feedback?.kind === "error" && (
+        <div className="mt-5 rounded-lg border border-[#fca5a5] bg-[#fde8e8] px-4 py-3 text-sm font-medium text-[#c53030]">
+          {feedback.message}
+        </div>
       )}
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+      <form onSubmit={onSubmit} className="mt-6 space-y-5">
         <div>
-          <label htmlFor="attendeeName" className="mb-2 block text-sm font-medium text-foreground">
-            Full name
+          <label
+            htmlFor="attendeeName"
+            className="mb-2 block text-sm font-semibold text-[#545451]"
+          >
+            Full name *
           </label>
           <input
             id="attendeeName"
@@ -75,13 +108,17 @@ export function PublicRegistrationSection({
             required
             value={formData.attendeeName}
             onChange={(event) => onNameChange(event.target.value)}
-            className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+            className={inputClasses}
+            placeholder="Jane Doe"
           />
         </div>
 
         <div>
-          <label htmlFor="attendeeEmail" className="mb-2 block text-sm font-medium text-foreground">
-            Email address
+          <label
+            htmlFor="attendeeEmail"
+            className="mb-2 block text-sm font-semibold text-[#545451]"
+          >
+            Email address *
           </label>
           <input
             id="attendeeEmail"
@@ -89,18 +126,19 @@ export function PublicRegistrationSection({
             required
             value={formData.attendeeEmail}
             onChange={(event) => onEmailChange(event.target.value)}
-            className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+            className={inputClasses}
+            placeholder="jane@example.com"
           />
         </div>
 
         <button
           type="submit"
           disabled={registering}
-          className="w-full rounded-lg bg-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+          className="mt-2 w-full rounded-lg bg-[#FF7F11] px-6 py-3.5 font-semibold text-white transition-all hover:bg-[#e67210] hover:shadow-md disabled:opacity-50"
         >
-          {registering ? 'Submitting...' : 'Register now'}
+          {registering ? "Submitting registration..." : "Register now"}
         </button>
       </form>
     </section>
-  )
+  );
 }

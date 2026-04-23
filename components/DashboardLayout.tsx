@@ -1,23 +1,16 @@
-'use client'
+import DashboardSidebar from './DashboardSidebar'
 
-import { ClerkProvider } from '@clerk/nextjs'
-import DashboardSidebar from '@/components/DashboardSidebar'
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <div className="flex h-screen">
-        <DashboardSidebar />
-        <main className="flex-1 ml-64 overflow-auto">
-          <div className="p-8">
-            {children}
-          </div>
-        </main>
-      </div>
-    </ClerkProvider>
+    <div className="min-h-screen bg-cream">
+      <DashboardSidebar />
+      <main className="lg:pl-[300px] min-h-screen">
+        <div className="mx-auto w-full max-w-6xl px-6 py-12 lg:px-12 lg:py-16">
+          {children}
+        </div>
+      </main>
+      
+      {/* Mobile Nav Placeholder or Floating Menu can go here if needed */}
+    </div>
   )
 }

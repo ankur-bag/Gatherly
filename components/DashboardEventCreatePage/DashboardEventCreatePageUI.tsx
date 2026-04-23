@@ -1,185 +1,171 @@
 'use client'
 
 import DashboardLayout from '@/components/DashboardLayout'
-import { EVENT_TEMPLATES } from '@/lib/utils'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { FiArrowLeft } from 'react-icons/fi'
+import { FiArrowLeft, FiCheck, FiSave, FiAlertCircle } from 'react-icons/fi'
+import Link from 'next/link'
 
 export function DashboardEventCreatePageUI() {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
-
-  if (selectedTemplate) {
-    const template = EVENT_TEMPLATES.find((t) => t.id === selectedTemplate)
-    return (
-      <DashboardLayout>
-        <div className="max-w-3xl animate-slideInUp">
-          <button
-            onClick={() => setSelectedTemplate(null)}
-            className="mb-8 flex items-center gap-2 font-medium text-primary transition-colors hover:text-primary-dark"
-          >
-            <FiArrowLeft size={20} />
-            Back to templates
-          </button>
-
-          <div className="space-y-8">
-            <h1 className="text-3xl font-semibold text-foreground">{template?.label}</h1>
-            <EventForm template={template!} />
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  return (
-    <DashboardLayout>
-      <div className="animate-slideInUp space-y-8">
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">Create Event</h1>
-          <p className="mt-2 text-neutral-600">Choose a template to get started</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          {EVENT_TEMPLATES.map((template) => (
-            <button
-              key={template.id}
-              onClick={() => setSelectedTemplate(template.id)}
-              className="group animate-slideInUp rounded-lg border-2 border-neutral-200 bg-white p-6 text-left transition-all hover:border-primary hover:bg-neutral-50"
-              style={{ animationDelay: `${EVENT_TEMPLATES.indexOf(template) * 50}ms` }}
-            >
-              <div className="mb-4 text-4xl transition-transform group-hover:scale-110">{template.icon}</div>
-              <h3 className="text-xl font-semibold text-foreground transition-colors group-hover:text-primary">{template.label}</h3>
-              <p className="mt-2 text-sm text-neutral-600">{template.description}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-    </DashboardLayout>
-  )
-}
-
-function EventForm({ template }: { template: (typeof EVENT_TEMPLATES)[0] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [formData, setFormData] = useState({
-    title: template.prefill.title,
-    description: template.prefill.description,
-    dateTime: new Date().toISOString().slice(0, 16),
-    venue: '',
-    isOnline: template.prefill.isOnline,
-    capacity: template.prefill.capacity.toString(),
-    registrationMode: template.prefill.registrationMode,
-  })
+  const [error, setError] = useState<string | null>(null)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
-    setError('')
+    setError(null)
+
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      dateTime: formData.get('dateTime'),
+      location: formData.get('location'),
+      isOnline: formData.get('isOnline') === 'true',
+      capacity: Number(formData.get('capacity')),
+      status: 'draft',
+    }
 
     try {
       const res = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          capacity: parseInt(formData.capacity),
-          dateTime: new Date(formData.dateTime).toISOString(),
-          templateUsed: template.id,
-        }),
+        body: JSON.stringify(data),
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to create event')
-      }
-
-      const { data } = await res.json()
-      router.push(`/dashboard/events/${data._id}`)
-    } catch (err: any) {
-      setError(err.message)
+      if (!res.ok) throw new Error('Failed to create event')
+      
+      router.push('/dashboard')
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border border-neutral-200 bg-white p-8">
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-foreground">Event Title *</label>
-        <input
-          type="text"
-          required
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
-        />
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-foreground">Description *</label>
-        <textarea
-          required
-          rows={4}
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">Date & Time *</label>
-          <input
-            type="datetime-local"
-            required
-            value={formData.dateTime}
-            onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
-            className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">Capacity *</label>
-          <input
-            type="number"
-            required
-            min="1"
-            value={formData.capacity}
-            onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-            className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
-          />
-        </div>
-      </div>
-
-      {!formData.isOnline && (
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">Venue *</label>
-          <input
-            type="text"
-            required={!formData.isOnline}
-            value={formData.venue}
-            onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-            className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
-          />
-        </div>
-      )}
-
-      <div className="flex items-center gap-6 border-t border-neutral-200 pt-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
-        >
-          {loading ? 'Creating...' : 'Create Event'}
-        </button>
-        <Link href="/dashboard" className="text-neutral-600 transition-colors hover:text-foreground">
-          Cancel
+    <DashboardLayout>
+      <div className="animate-reveal max-w-2xl mx-auto">
+        {/* Back Button */}
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm font-bold text-charcoal/40 hover:text-charcoal transition-colors mb-10 group">
+          <FiArrowLeft className="transition-transform group-hover:-translate-x-1" />
+          Back to list
         </Link>
+
+        {/* Header */}
+        <div className="mb-12">
+           <h1 className="text-charcoal leading-none mb-1">New Event</h1>
+           <p className="text-charcoal/40 font-medium">Define your operational flow and guest list.</p>
+        </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="mb-8 flex items-center gap-3 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-500 border border-red-100">
+            <FiAlertCircle size={18} />
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+           <div className="bento-card space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-black/30 ml-1">Event Title</label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  required
+                  placeholder="e.g. Designer Coffee Morning"
+                  className="w-full h-14 rounded-2xl bg-black/5 border-none px-6 text-charcoal font-bold placeholder:text-black/20 focus:ring-2 focus:ring-orange/20 transition-all outline-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-black/30 ml-1">Context & Details</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={4}
+                  required
+                  placeholder="Tell your guests what this event is about..."
+                  className="w-full rounded-2xl bg-black/5 border-none p-6 text-charcoal font-bold placeholder:text-black/20 focus:ring-2 focus:ring-orange/20 transition-all outline-none resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="space-y-2">
+                    <label htmlFor="dateTime" className="text-xs font-bold uppercase tracking-widest text-black/30 ml-1">Date & Time</label>
+                    <input
+                      id="dateTime"
+                      name="dateTime"
+                      type="datetime-local"
+                      required
+                      className="w-full h-14 rounded-2xl bg-black/5 border-none px-6 text-charcoal font-bold focus:ring-2 focus:ring-orange/20 transition-all outline-none"
+                    />
+                 </div>
+                 <div className="space-y-2">
+                    <label htmlFor="capacity" className="text-xs font-bold uppercase tracking-widest text-black/30 ml-1">Total Capacity</label>
+                    <input
+                      id="capacity"
+                      name="capacity"
+                      type="number"
+                      required
+                      defaultValue={50}
+                      className="w-full h-14 rounded-2xl bg-black/5 border-none px-6 text-charcoal font-bold focus:ring-2 focus:ring-orange/20 transition-all outline-none"
+                    />
+                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="location" className="text-xs font-bold uppercase tracking-widest text-black/30 ml-1">Location or Link</label>
+                <input
+                  id="location"
+                  name="location"
+                  type="text"
+                  required
+                  placeholder="e.g. SoHo House, London"
+                  className="w-full h-14 rounded-2xl bg-black/5 border-none px-6 text-charcoal font-bold focus:ring-2 focus:ring-orange/20 transition-all outline-none"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-black/5">
+                 <div className="flex items-center justify-between">
+                    <div>
+                       <p className="text-sm font-bold text-charcoal">Online Event?</p>
+                       <p className="text-xs text-charcoal/40 font-medium tracking-tight">Enable automated Zoom synchronization hooks.</p>
+                    </div>
+                    <select 
+                       name="isOnline" 
+                       className="h-10 rounded-xl bg-orange/10 text-orange font-bold text-xs px-4 border-none focus:ring-0 cursor-pointer"
+                    >
+                       <option value="false">No</option>
+                       <option value="true">Yes</option>
+                    </select>
+                 </div>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="h-14 flex-1 bg-charcoal text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-black/10 hover:bg-orange hover:shadow-orange/20 transition-all disabled:opacity-50"
+              >
+                {loading ? 'Processing...' : (
+                  <>
+                    <FiSave size={20} />
+                    Create and Save Draft
+                  </>
+                )}
+              </button>
+              <Link href="/dashboard" className="h-14 px-8 border border-black/10 rounded-2xl flex items-center justify-center text-charcoal font-bold hover:bg-black/5 transition-all">
+                 Cancel
+              </Link>
+           </div>
+        </form>
       </div>
-    </form>
+    </DashboardLayout>
   )
 }

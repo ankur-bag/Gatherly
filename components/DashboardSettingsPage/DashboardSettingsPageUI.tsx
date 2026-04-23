@@ -1,79 +1,79 @@
 'use client'
 
 import DashboardLayout from '@/components/DashboardLayout'
-import { IUser } from '@/types'
+import { ZoomSyncStatus } from '@/types'
 import { useAuth } from '@clerk/nextjs'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCheck } from 'react-icons/fi'
+import { FiAlertCircle, FiCheck, FiSettings, FiVideo, FiArrowRight } from 'react-icons/fi'
 
 export function DashboardSettingsPageUI() {
   const { isLoaded } = useAuth()
-  const [user, setUser] = useState<IUser | null>(null)
+  const [zoomStatus, setZoomStatus] = useState<ZoomSyncStatus>('pending')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    zoomAccountId: '',
-    zoomClientId: '',
-    zoomClientSecret: '',
-  })
+  const [actionLoading, setActionLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!isLoaded) return
-
-    async function fetchUser() {
+    async function checkZoom() {
       try {
-        const res = await fetch('/api/users/me')
-        if (!res.ok) throw new Error('Failed to fetch user')
-        const { data } = await res.json()
-        setUser(data)
-        setFormData({
-          zoomAccountId: data.zoomAccountId || '',
-          zoomClientId: data.zoomClientId || '',
-          zoomClientSecret: data.zoomClientSecret || '',
-        })
-      } catch (error) {
-        console.error('Failed to fetch user:', error)
+        const res = await fetch('/api/settings/zoom')
+        const data = await res.json()
+        setZoomStatus(data.status || 'pending')
+      } catch {
+        setError('Failed to fetch settings')
       } finally {
         setLoading(false)
       }
     }
-
-    fetchUser()
+    checkZoom()
   }, [isLoaded])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-
+  async function handleZoomConnect() {
+    setActionLoading(true)
+    setError('')
     try {
-      const res = await fetch('/api/users/me/settings', {
-        method: 'PATCH',
+      const res = await fetch('/api/settings/zoom', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ action: 'connect' }),
       })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to save settings')
-      }
-
-      const { data } = await res.json()
-      setUser(data)
-      alert('Settings saved successfully!')
-    } catch (error: any) {
-      alert(error.message)
+      if (!res.ok) throw new Error('Connect failed')
+      const data = await res.json()
+      setZoomStatus(data.status)
+    } catch {
+      setError('Failed to configure Zoom')
     } finally {
-      setSaving(false)
+      setActionLoading(false)
     }
   }
 
-  if (!isLoaded || loading) {
+  async function handleZoomDisconnect() {
+    if (!confirm('Are you sure you want to disconnect Zoom?')) return
+    setActionLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/settings/zoom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'disconnect' }),
+      })
+      if (!res.ok) throw new Error('Disconnect failed')
+      const data = await res.json()
+      setZoomStatus(data.status)
+    } catch {
+      setError('Failed to reverse configurations')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  if (loading || !isLoaded) {
     return (
       <DashboardLayout>
-        <div className="animate-fadeIn space-y-4">
-          <div className="h-12 w-1/2 animate-pulse rounded-lg bg-neutral-200" />
-          <div className="h-64 animate-pulse rounded-lg bg-neutral-200" />
+        <div className="space-y-4">
+          <div className="skeleton h-10 w-48" />
+          <div className="skeleton mt-10 h-64 w-full rounded-3xl" />
         </div>
       </DashboardLayout>
     )
@@ -81,113 +81,92 @@ export function DashboardSettingsPageUI() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-2xl animate-slideInUp space-y-8">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 font-medium text-primary transition-colors hover:text-primary-dark"
-        >
-          <FiArrowLeft size={20} />
-          Back to Dashboard
-        </Link>
-
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
-          <p className="mt-2 text-neutral-600">Manage your account and integrations</p>
+      <div className="animate-reveal max-w-4xl space-y-10">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-charcoal leading-none mb-1">General Settings</h1>
+          <p className="text-base text-charcoal/40 font-medium">Manage your platform integrations and organizer profile</p>
         </div>
 
-        <div className="rounded-lg border border-neutral-200 bg-white p-8">
-          <h2 className="mb-6 text-xl font-semibold text-foreground">Profile</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-neutral-600">Name</label>
-              <p className="text-lg font-medium text-foreground">{user?.name || 'Not set'}</p>
+        {error && (
+          <div className="flex items-center gap-3 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-500 border border-red-100">
+            <FiAlertCircle size={18} />
+            {error}
+          </div>
+        )}
+
+        <div className="bento-card !p-0 overflow-hidden border-none shadow-framer">
+          {/* Section Header */}
+          <div className="bg-charcoal/5 px-8 py-6 border-b border-black/5">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 shadow-sm">
+                <FiVideo size={24} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-charcoal" style={{ fontFamily: 'var(--font-sans)' }}>Zoom Core Integration</h2>
+                <p className="text-sm text-charcoal/40 font-medium">Auto-sync meetings with your events</p>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-neutral-600">Email</label>
-              <p className="text-lg font-medium text-foreground">{user?.email || 'Not set'}</p>
+          </div>
+
+          {/* Section Body */}
+          <div className="p-8 lg:p-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="max-w-md space-y-4">
+                <div className="flex items-center gap-3">
+                   <span className="text-xs font-bold uppercase tracking-widest text-charcoal/30">Network Status:</span>
+                   {zoomStatus === 'synced' ? (
+                     <div className="flex items-center gap-2 rounded-full bg-green-50 px-4 py-1.5 text-xs font-bold text-green-600 border border-green-100 shadow-xs">
+                        <FiCheck size={14} /> Linked
+                     </div>
+                   ) : (
+                     <div className="flex items-center gap-2 rounded-full bg-black/5 px-4 py-1.5 text-xs font-bold text-charcoal/40 border border-black/5">
+                        Disconnected
+                     </div>
+                   )}
+                </div>
+                <p className="text-base leading-relaxed text-charcoal/50 font-medium">
+                  When linked, Avento will automatically provision a unique Zoom
+                  meeting for every "Online" event and sync the guest join details in real-time.
+                </p>
+              </div>
+
+              <div className="flex justify-start lg:justify-end">
+                {zoomStatus === 'synced' ? (
+                  <button
+                    onClick={handleZoomDisconnect}
+                    disabled={actionLoading}
+                    className="h-14 px-10 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {actionLoading ? 'Unlinking...' : 'Disconnect Zoom'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleZoomConnect}
+                    disabled={actionLoading}
+                    className="h-14 px-10 rounded-2xl bg-charcoal text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {actionLoading ? 'Connecting...' : 'Link Zoom Account'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border border-neutral-200 bg-white p-8">
-          <div>
-            <h2 className="mb-2 text-xl font-semibold text-foreground">Zoom Integration</h2>
-            <p className="text-sm text-neutral-600">
-              Add your Zoom credentials to automatically create meeting links for your online events.
-            </p>
-          </div>
-
-          {user?.zoomAccountId && user?.zoomClientId && (
-            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-              <FiCheck size={20} />
-              Zoom credentials configured
-            </div>
-          )}
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">Zoom Account ID</label>
-            <input
-              type="text"
-              value={formData.zoomAccountId}
-              onChange={(e) => setFormData({ ...formData, zoomAccountId: e.target.value })}
-              placeholder="e.g., abc123..."
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <p className="mt-2 text-xs text-neutral-500">Your Zoom account ID from the Zoom Admin Center</p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">Zoom Client ID</label>
-            <input
-              type="text"
-              value={formData.zoomClientId}
-              onChange={(e) => setFormData({ ...formData, zoomClientId: e.target.value })}
-              placeholder="e.g., abc123..."
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <p className="mt-2 text-xs text-neutral-500">OAuth 2.0 Client ID from your Zoom app</p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">Zoom Client Secret</label>
-            <input
-              type="password"
-              value={formData.zoomClientSecret}
-              onChange={(e) => setFormData({ ...formData, zoomClientSecret: e.target.value })}
-              placeholder="••••••••••••"
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <p className="mt-2 text-xs text-neutral-500">OAuth 2.0 Client Secret (never shared)</p>
-          </div>
-
-          <div className="flex gap-4 border-t border-neutral-200 pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Settings'}
-            </button>
-            <Link href="/dashboard" className="rounded-lg px-6 py-3 text-neutral-600 transition-colors hover:bg-neutral-100">
-              Cancel
-            </Link>
-          </div>
-        </form>
-
-        <div className="space-y-4 rounded-lg border border-neutral-200 bg-neutral-50 p-6">
-          <h3 className="font-semibold text-foreground">How to get Zoom credentials</h3>
-          <ol className="space-y-2 text-sm text-neutral-700">
-            <li>
-              1. Go to{' '}
-              <a href="https://zoom.us/developer" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-dark">
-                Zoom App Marketplace
-              </a>
-            </li>
-            <li>2. Create a new Server-to-Server OAuth application</li>
-            <li>3. Copy your Account ID from the basic information page</li>
-            <li>4. Generate and copy the Client ID and Client Secret</li>
-            <li>5. Paste them here to enable automatic Zoom meeting creation</li>
-          </ol>
+        {/* Global Settings Stub */}
+        <div className="bento-card flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-none translate-y-0">
+           <div className="flex items-center gap-5">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-charcoal/5 text-charcoal/30">
+                 <FiSettings size={28} />
+              </div>
+              <div>
+                 <h3 className="text-xl font-bold text-charcoal" style={{ fontFamily: 'var(--font-sans)' }}>Organizer Profile</h3>
+                 <p className="text-sm text-charcoal/40 font-medium">Identity and security managed via Clerk</p>
+              </div>
+           </div>
+           <button className="h-12 px-6 rounded-xl glass border-black/5 text-charcoal/60 font-bold text-xs flex items-center gap-2 cursor-not-allowed">
+              Managed by Provider
+           </button>
         </div>
       </div>
     </DashboardLayout>
