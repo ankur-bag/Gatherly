@@ -3,8 +3,9 @@
 import DashboardLayout from '@/components/DashboardLayout'
 import { ZoomSyncStatus } from '@/types'
 import { useAuth } from '@clerk/nextjs'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { FiAlertCircle, FiCheck, FiSettings, FiVideo, FiArrowRight } from 'react-icons/fi'
+import { FiAlertCircle, FiCheck, FiSettings, FiVideo, FiArrowLeft } from 'react-icons/fi'
 
 export function DashboardSettingsPageUI() {
   const { isLoaded } = useAuth()
@@ -82,6 +83,15 @@ export function DashboardSettingsPageUI() {
   return (
     <DashboardLayout>
       <div className="animate-reveal max-w-4xl space-y-10">
+        {/* Back Button */}
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-sm font-bold text-charcoal/60 hover:text-charcoal transition-colors mb-2 group"
+        >
+          <FiArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
+          Back to Dashboard
+        </Link>
+
         <div className="flex flex-col gap-2">
           <h1 className="text-charcoal leading-none mb-1">General Settings</h1>
           <p className="text-base text-charcoal/40 font-medium">Manage your platform integrations and organizer profile</p>
@@ -126,7 +136,7 @@ export function DashboardSettingsPageUI() {
                 </div>
                 <p className="text-base leading-relaxed text-charcoal/50 font-medium">
                   When linked, Avento will automatically provision a unique Zoom
-                  meeting for every "Online" event and sync the guest join details in real-time.
+                  meeting for every &quot;Online&quot; event and sync the guest join details in real-time.
                 </p>
               </div>
 

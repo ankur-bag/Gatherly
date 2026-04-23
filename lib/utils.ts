@@ -1,5 +1,4 @@
-import { IEvent, ZoomSyncStatus } from '@/types'
-import { PublicStatus } from '@/types'
+import type { IEvent, PublicStatus } from '@/types'
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -29,10 +28,10 @@ export const EVENT_TEMPLATES = [
   {
     id: 'tech-meetup',
     label: 'Tech Meetup',
-    icon: '💻',
+    icon: 'code',
     description: 'In-person tech community gathering',
     prefill: {
-      title: 'Tech Meetup — ',
+      title: 'Tech Meetup - ',
       description: 'Join us for an evening of tech talks, demos, and networking with fellow developers...',
       isOnline: false,
       registrationMode: 'open' as const,
@@ -42,7 +41,7 @@ export const EVENT_TEMPLATES = [
   {
     id: 'webinar',
     label: 'Webinar',
-    icon: '🎙️',
+    icon: 'video',
     description: 'Online presentation or panel',
     prefill: {
       title: 'Webinar: ',
@@ -55,7 +54,7 @@ export const EVENT_TEMPLATES = [
   {
     id: 'workshop',
     label: 'Workshop',
-    icon: '🛠️',
+    icon: 'tool',
     description: 'Hands-on, small-group learning session',
     prefill: {
       title: 'Workshop: ',
@@ -68,10 +67,10 @@ export const EVENT_TEMPLATES = [
   {
     id: 'networking',
     label: 'Networking Event',
-    icon: '🤝',
+    icon: 'network',
     description: 'Professional networking and mingling',
     prefill: {
-      title: 'Networking Night — ',
+      title: 'Networking Night - ',
       description: 'Connect with professionals in your field over drinks and conversation...',
       isOnline: false,
       registrationMode: 'open' as const,

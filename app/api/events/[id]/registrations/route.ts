@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

@@ -6,7 +6,7 @@ import { IEvent } from '@/types'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { FiCalendar, FiEdit2, FiEye, FiPlus, FiUsers, FiArrowRight } from 'react-icons/fi'
+import { FiCalendar, FiEdit2, FiEye, FiPlus, FiUsers } from 'react-icons/fi'
 
 export function DashboardPageUI() {
   const { isLoaded } = useAuth()
@@ -59,7 +59,7 @@ export function DashboardPageUI() {
             <p className="text-base text-charcoal/40 font-medium">Manage and organize your operational flows with precision.</p>
           </div>
           <Link
-            href="/dashboard/events/new"
+            href="/dashboard/events/template-selector"
             className="h-14 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-2 shadow-lg hover:bg-orange transition-all duration-300 hover:-translate-y-1 active:scale-95 translate-gpu"
           >
             <FiPlus size={20} />
@@ -76,7 +76,7 @@ export function DashboardPageUI() {
             <h2 className="text-3xl text-charcoal font-display mb-4">No events yet</h2>
             <p className="text-charcoal/40 font-medium max-w-[30ch] leading-relaxed">Start by creating your first RSVP flow to see data here.</p>
             <Link
-              href="/dashboard/events/new"
+              href="/dashboard/events/template-selector"
               className="mt-10 h-14 px-10 rounded-2xl bg-charcoal text-white font-bold flex items-center gap-2 hover:bg-orange transition-all duration-300"
             >
               Create First Event

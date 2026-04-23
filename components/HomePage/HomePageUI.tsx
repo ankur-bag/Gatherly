@@ -6,6 +6,7 @@ import VercepFeature1 from "../ui/vercep-feature-1";
 import { Footer } from "./Footer";
 import { Hero } from "./Hero";
 import { Nav } from "./Nav";
+import { Features } from "./Features";
 
 export function HomePageUI() {
   const { isSignedIn } = useAuth();
@@ -17,7 +18,6 @@ export function HomePageUI() {
       <main className="w-full">
         <Hero isSignedIn={signedIn} />
         <VercepFeature1 />
-
         <Cta isSignedIn={signedIn} />
       </main>
       <Footer />

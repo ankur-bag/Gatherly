@@ -1,3 +1,6 @@
+import { registerEmailExtension } from '@/extensions/email'
+import { registerZoomExtension } from '@/extensions/zoom'
+
 let isBootstrapped = false
 
 export function bootstrap() {
@@ -8,14 +11,14 @@ export function bootstrap() {
   // Extensions register hooks when imported
   try {
     // Email extension
-    require('@/extensions/email').registerEmailExtension()
+    registerEmailExtension()
   } catch (error) {
     console.error('Failed to register email extension:', error)
   }
 
   try {
     // Zoom extension
-    require('@/extensions/zoom').registerZoomExtension()
+    registerZoomExtension()
   } catch (error) {
     console.error('Failed to register zoom extension:', error)
   }
