@@ -42,10 +42,10 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
 
   async function updateStatus(regId: string, status: string) {
     try {
-      const res = await fetch(`/api/events/${eventId}/registrations`, {
+      const res = await fetch(`/api/registrations/${regId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrationId: regId, status }),
+        body: JSON.stringify({ status }),
       })
       if (!res.ok) throw new Error('Status update failed')
       fetchAttendees()

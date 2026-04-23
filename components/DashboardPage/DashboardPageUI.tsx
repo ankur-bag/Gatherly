@@ -12,24 +12,60 @@ export function DashboardPageUI() {
   const { isLoaded } = useAuth()
   const [events, setEvents] = useState<IEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoaded) return
-
-    async function fetchEvents() {
-      try {
-        const res = await fetch('/api/events')
-        const data = await res.json()
-        setEvents(data.data || [])
-      } catch (error) {
-        console.error('Failed to fetch events:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchEvents()
   }, [isLoaded])
+
+  async function fetchEvents() {
+    try {
+      const res = await fetch('/api/events')
+      const data = await res.json()
+      setEvents(data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLaunch = async (eventId: string) => {
+    setProcessingId(eventId)
+    try {
+      const res = await fetch(`/api/events/${eventId}/publish`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to launch')
+      await fetchEvents()
+    } catch (err) {
+      alert('Failed to launch event')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const handleDelete = async (eventId: string) => {
+    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return
+    setProcessingId(eventId)
+    try {
+      const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' })
+      if (!res.ok) {
+         const error = await res.json()
+         throw new Error(error.error || 'Failed to delete')
+      }
+      await fetchEvents()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const copyPublicLink = (event: IEvent) => {
+    const url = `${window.location.origin}/events/${event.slugBase}-${event._id}`
+    navigator.clipboard.writeText(url)
+    alert('Link copied to clipboard!')
+  }
 
   if (!isLoaded || loading) {
     return (
@@ -49,21 +85,27 @@ export function DashboardPageUI() {
     )
   }
 
+  const launchedEvents = events.filter(e => e.status === 'published')
+  const draftEvents = events.filter(e => e.status !== 'published')
+
   return (
     <DashboardLayout>
       <div className="animate-reveal space-y-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8 pb-8 border-b border-charcoal/5">
           <div>
-            <h1 className="text-charcoal leading-none mb-4 font-display">Your Events</h1>
-            <p className="text-base text-charcoal/40 font-medium">Manage and organize your operational flows with precision.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-beige/40 text-[10px] font-bold uppercase tracking-widest text-charcoal/40 mb-6 border border-charcoal/5">
+              Event Management
+            </div>
+            <h1 className="text-5xl sm:text-6xl text-charcoal leading-none mb-4 font-display tracking-tight">Your Events</h1>
+            <p className="text-lg text-charcoal/40 font-medium max-w-xl">Manage and organize your operational flows with precision.</p>
           </div>
           <Link
             href="/dashboard/events/template-selector"
-            className="h-14 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-2 shadow-lg hover:bg-orange transition-all duration-300 hover:-translate-y-1 active:scale-95 translate-gpu"
+            className="h-16 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-3 shadow-xl hover:bg-orange transition-all duration-500 hover:-translate-y-1 active:scale-95 translate-gpu group"
           >
-            <FiPlus size={20} />
-            Create Event
+            <FiPlus size={22} className="transition-transform group-hover:rotate-90" />
+            Create New Event
           </Link>
         </div>
 
@@ -83,83 +125,174 @@ export function DashboardPageUI() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-8">
-            {events.map((event, idx) => (
-              <div
-                key={event._id?.toString() || idx}
-                className="bento-card !p-0 overflow-hidden group border-none"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <div className="flex flex-col md:flex-row md:items-stretch">
-                   {/* Date Column */}
-                   <div className="w-full md:w-48 bg-charcoal/5 flex flex-col items-center justify-center p-8 border-b md:border-b-0 md:border-r border-black/5">
-                      <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-charcoal/30 mb-2">
-                         {new Date(event.dateTime).toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                      <span className="text-5xl font-display text-charcoal leading-none">
-                         {new Date(event.dateTime).getDate()}
-                      </span>
-                      <span className="text-sm font-bold text-orange mt-2 tracking-widest uppercase">
-                         {new Date(event.dateTime).toLocaleDateString('en-US', { month: 'short' })}
-                      </span>
-                   </div>
-
-                   {/* Main Content */}
-                   <div className="flex-1 p-10 flex flex-col justify-between">
-                      <div className="flex flex-wrap items-start justify-between gap-6 mb-4">
-                         <div className="min-w-0">
-                            <h3 className="text-3xl font-display text-charcoal group-hover:text-orange transition-colors truncate mb-3">
-                               {event.title}
-                            </h3>
-                            <p className="text-base text-charcoal/40 leading-relaxed font-medium line-clamp-2 max-w-2xl">{event.description}</p>
-                         </div>
-                         <div className="flex gap-2">
-                             <StatusBadge status={event.status} />
-                             {event.zoomSyncStatus && event.isOnline && <ZoomSyncBadge syncStatus={event.zoomSyncStatus} />}
-                         </div>
-                      </div>
-
-                      <div className="mt-10 flex flex-wrap items-center justify-between gap-8 border-t border-black/5 pt-8">
-                         <div className="flex items-center gap-8">
-                            <div className="flex items-center gap-3 text-xs font-bold text-charcoal/60 uppercase tracking-widest">
-                               <FiUsers size={16} className="text-orange" />
-                               {event.capacity} Capacity
-                            </div>
-                            <div className="flex items-center gap-3 text-xs font-bold text-charcoal/60 uppercase tracking-widest">
-                               <FiCalendar size={16} className="text-orange" />
-                               {new Date(event.dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                         </div>
-
-                         <div className="flex items-center gap-3">
-                            <Link
-                              href={`/dashboard/events/${event._id}/attendees`}
-                              className="h-12 px-8 rounded-xl bg-charcoal text-white font-bold text-xs flex items-center gap-2 hover:bg-orange transition-all duration-300"
-                            >
-                               Attendees
-                            </Link>
-                            <Link
-                              href={`/dashboard/events/${event._id}`}
-                              className="h-12 w-12 rounded-xl glass border-black/5 flex items-center justify-center text-charcoal hover:bg-black/5 transition-all shadow-sm"
-                            >
-                               <FiEdit2 size={18} />
-                            </Link>
-                            <Link
-                              href={`/events/${event.slug || ''}`}
-                              target="_blank"
-                              className="h-12 w-12 rounded-xl glass border-black/5 flex items-center justify-center text-charcoal hover:bg-orange hover:text-white transition-all shadow-sm"
-                            >
-                               <FiEye size={18} />
-                            </Link>
-                         </div>
-                      </div>
-                   </div>
+          <div className="space-y-16">
+            {/* Launched Section */}
+            {launchedEvents.length > 0 && (
+              <section>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-[1px] flex-1 bg-charcoal/5" />
+                  <h2 className="text-xs font-bold uppercase tracking-[0.4em] text-charcoal/30 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    Launched Events
+                  </h2>
+                  <div className="h-[1px] flex-1 bg-charcoal/5" />
                 </div>
-              </div>
-            ))}
+                <div className="grid gap-8">
+                  {launchedEvents.map((event, idx) => (
+                    <EventCard 
+                      key={event._id?.toString() || idx} 
+                      event={event} 
+                      onLaunch={handleLaunch} 
+                      onDelete={handleDelete} 
+                      onCopyStatus={() => copyPublicLink(event.slug || '')}
+                      processingId={processingId}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Drafts Section */}
+            {draftEvents.length > 0 && (
+              <section>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-[1px] flex-1 bg-charcoal/5" />
+                  <h2 className="text-xs font-bold uppercase tracking-[0.4em] text-charcoal/30 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-orange/40" />
+                    Drafts & Archive
+                  </h2>
+                  <div className="h-[1px] flex-1 bg-charcoal/5" />
+                </div>
+                <div className="grid gap-8">
+                  {draftEvents.map((event, idx) => (
+                    <EventCard 
+                      key={event._id?.toString() || idx} 
+                      event={event} 
+                      onLaunch={handleLaunch} 
+                      onDelete={handleDelete} 
+                      onCopyStatus={() => copyPublicLink(event)}
+                      processingId={processingId}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+function EventCard({ 
+  event, 
+  onLaunch, 
+  onDelete, 
+  onCopyStatus, 
+  processingId 
+}: { 
+  event: IEvent, 
+  onLaunch: (id: string) => void, 
+  onDelete: (id: string) => void,
+  onCopyStatus: () => void,
+  processingId: string | null
+}) {
+  return (
+    <div className="bento-card !p-0 overflow-hidden group border-none">
+      <div className="flex flex-col md:flex-row md:items-stretch">
+         {/* Date Column */}
+         <div className="w-full md:w-52 bg-white/40 flex flex-col items-center justify-center p-10 border-b md:border-b-0 md:border-r border-charcoal/5 group-hover:bg-beige/30 transition-colors duration-500">
+            <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-charcoal/30 mb-3">
+               {new Date(event.dateTime).toLocaleDateString('en-US', { weekday: 'short' })}
+            </span>
+            <span className="text-6xl font-display text-charcoal leading-none tracking-tighter">
+               {new Date(event.dateTime).getDate()}
+            </span>
+            <span className="text-sm font-bold text-orange mt-3 tracking-[0.2em] uppercase">
+               {new Date(event.dateTime).toLocaleDateString('en-US', { month: 'short' })}
+            </span>
+         </div>
+
+         {/* Main Content */}
+         <div className="flex-1 p-10 flex flex-col justify-between">
+            <div className="flex flex-wrap items-start justify-between gap-6 mb-4">
+               <div className="min-w-0">
+                  <h3 className="text-3xl font-display text-charcoal group-hover:text-orange transition-colors truncate mb-3">
+                     {event.title}
+                  </h3>
+                  <p className="text-base text-charcoal/40 leading-relaxed font-medium line-clamp-2 max-w-2xl">{event.description}</p>
+               </div>
+               <div className="flex gap-2">
+                   <StatusBadge status={event.status} />
+                   {event.zoomSyncStatus && event.isOnline && <ZoomSyncBadge syncStatus={event.zoomSyncStatus} />}
+               </div>
+            </div>
+
+            <div className="mt-10 flex flex-wrap items-center justify-between gap-8 border-t border-black/5 pt-8">
+               <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-3 text-xs font-bold text-charcoal/60 uppercase tracking-widest">
+                     <FiUsers size={16} className="text-orange" />
+                     {event.capacity} Capacity
+                  </div>
+                  <div className="flex items-center gap-3 text-xs font-bold text-charcoal/60 uppercase tracking-widest">
+                     <FiCalendar size={16} className="text-orange" />
+                     {new Date(event.dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+               </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {event.status === 'draft' && (
+                     <button
+                       onClick={() => onLaunch(event._id?.toString() || '')}
+                       disabled={processingId === event._id?.toString()}
+                       className="h-12 px-8 rounded-xl bg-orange text-white font-bold text-xs flex items-center gap-2 hover:bg-orange-hover transition-all duration-300 shadow-md hover:shadow-orange/20 disabled:opacity-50"
+                     >
+                       {processingId === event._id?.toString() ? 'Launching...' : 'Launch Event'}
+                     </button>
+                  )}
+                  
+                  {event.status === 'published' && (
+                     <button
+                       onClick={onCopyStatus}
+                       className="h-12 px-6 rounded-xl bg-beige text-charcoal font-bold text-xs flex items-center gap-2 hover:bg-charcoal hover:text-white transition-all shadow-sm"
+                     >
+                       Copy Link
+                     </button>
+                  )}
+
+                  <Link
+                     href={`/dashboard/events/${event._id}/attendees`}
+                     className="h-12 px-8 rounded-xl bg-charcoal text-white font-bold text-xs flex items-center gap-2 hover:bg-orange transition-all duration-300 shadow-md hover:shadow-orange/20"
+                  >
+                     Attendees
+                  </Link>
+                  
+                  <Link
+                     href={`/dashboard/events/${event._id}/edit`}
+                     className="h-12 w-12 rounded-xl glass border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-beige transition-all shadow-sm"
+                  >
+                     <FiEdit2 size={18} />
+                  </Link>
+                  
+                  <button
+                     onClick={() => onDelete(event._id?.toString() || '')}
+                     disabled={processingId === event._id?.toString()}
+                     className="h-12 w-12 rounded-xl glass border-red-100 flex items-center justify-center text-red-500 hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
+                  >
+                     <FiPlus size={18} className="rotate-45" />
+                  </button>
+
+                  <Link
+                     href={`/events/${event.slugBase}-${event._id}`}
+                     target="_blank"
+                     className="h-12 w-12 rounded-xl glass border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-orange hover:text-white transition-all shadow-sm"
+                  >
+                     <FiEye size={18} />
+                  </Link>
+               </div>
+            </div>
+         </div>
+      </div>
+    </div>
   )
 }

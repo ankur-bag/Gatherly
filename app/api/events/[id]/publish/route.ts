@@ -5,14 +5,15 @@ import * as EventController from '@/controllers/EventController'
 
 bootstrap()
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const result = await EventController.publish(userId, params.id)
+    const result = await EventController.publish(userId, id)
     return NextResponse.json({ data: result })
   } catch (error: any) {
     console.error('POST /api/events/[id]/publish error:', error)

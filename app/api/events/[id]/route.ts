@@ -5,14 +5,15 @@ import * as EventController from '@/controllers/EventController'
 
 bootstrap()
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const result = await EventController.getById(userId, params.id)
+    const result = await EventController.getById(userId, id)
     return NextResponse.json({ data: result })
   } catch (error: any) {
     console.error('GET /api/events/[id] error:', error)
@@ -26,15 +27,16 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await req.json()
-    const result = await EventController.update(userId, params.id, body)
+    const result = await EventController.update(userId, id, body)
     return NextResponse.json({ data: result })
   } catch (error: any) {
     console.error('PATCH /api/events/[id] error:', error)
@@ -48,14 +50,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await EventController.deleteEvent(userId, params.id)
+    await EventController.deleteEvent(userId, id)
     return NextResponse.json({ data: null })
   } catch (error: any) {
     console.error('DELETE /api/events/[id] error:', error)

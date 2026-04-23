@@ -5,10 +5,11 @@ import * as RegistrationController from '@/controllers/RegistrationController'
 
 bootstrap()
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = await req.json()
-    const result = await RegistrationController.create(params.id, body)
+    const result = await RegistrationController.create(id, body)
     return NextResponse.json({ data: result }, { status: 201 })
   } catch (error: any) {
     console.error('POST /api/events/[id]/registrations error:', error)
@@ -28,8 +29,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -39,7 +41,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const search = url.searchParams.get('search') || undefined
     const status = url.searchParams.get('status') || undefined
 
-    const result = await RegistrationController.list(userId, params.id, { search: search, status: status })
+    const result = await RegistrationController.list(userId, id, { search: search, status: status })
     return NextResponse.json({ data: result })
   } catch (error: any) {
     console.error('GET /api/events/[id]/registrations error:', error)

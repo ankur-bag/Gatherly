@@ -1,6 +1,6 @@
 import { dbConnect } from '@/lib/mongodb'
 import { triggerHook } from '@/lib/hooks'
-import { generateSlug } from '@/lib/utils'
+import { generateBaseSlug } from '@/lib/utils'
 import Event from '@/models/Event'
 import Registration from '@/models/Registration'
 import User from '@/models/User'
@@ -20,13 +20,14 @@ export async function create(userId: string, body: CreateEventInput): Promise<IE
     throw new Error('Missing required fields')
   }
 
-  const slug = generateSlug(body.title)
+  const slugBase = generateBaseSlug(body.title)
 
   const event = await Event.create({
     ...body,
     organizerClerkId: userId,
-    slug,
-    status: 'draft',
+    slugBase,
+    slug: slugBase, // Backward sync
+    status: body.status || 'draft',
   })
 
   return event.toObject()
@@ -48,17 +49,46 @@ export async function getById(userId: string, eventId: string): Promise<IEvent> 
   return event.toObject()
 }
 
-export async function getBySlug(slug: string): Promise<{ event: IEvent; publicStatus: string | null; activeCount: number }> {
+export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; publicStatus: string | null; activeCount: number; redirectUrl?: string }> {
   await dbConnect()
 
-  const event = await Event.findOne({ slug })
-  if (!event) {
+  // 1. Handle Legacy Format with '---'
+  if (slugInUrl.includes('---')) {
+    const event = await Event.findOne({ slug: slugInUrl })
+    if (event) {
+      return {
+        event: event.toObject(),
+        publicStatus: null,
+        activeCount: 0,
+        redirectUrl: `/events/${generateBaseSlug(event.title)}-${event._id}`
+      }
+    }
     throw new Error('Not found')
   }
 
-  // Only published events are visible publicly
-  if (event.status !== 'published') {
+  // 2. Extract ID using regex: -[24-char-hex-id]
+  const match = slugInUrl.match(/-([a-f0-9]{24})$/)
+  if (!match) {
     throw new Error('Not found')
+  }
+
+  const eventId = match[1]
+  const incomingBase = slugInUrl.replace(/-[a-f0-9]{24}$/, '')
+
+  const event = await Event.findById(eventId)
+  if (!event || event.status !== 'published') {
+    throw new Error('Not found')
+  }
+
+  // 3. SEO Check: Compare incoming slug base with current title-derived base
+  const correctBase = generateBaseSlug(event.title)
+  if (incomingBase !== correctBase) {
+    return {
+      event: event.toObject(),
+      publicStatus: null,
+      activeCount: 0,
+      redirectUrl: `/events/${correctBase}-${event._id}`
+    }
   }
 
   // Compute active count (only registered + approved)
@@ -103,6 +133,8 @@ export async function update(userId: string, eventId: string, body: UpdateEventI
   if (body.title !== undefined && body.title !== event.title) {
     changedFields.push('title')
     updateData.title = body.title
+    updateData.slugBase = generateBaseSlug(body.title)
+    updateData.slug = updateData.slugBase // Keep legacy sync for now
   }
   if (body.description !== undefined && body.description !== event.description) {
     changedFields.push('description')
@@ -240,9 +272,9 @@ export async function deleteEvent(userId: string, eventId: string): Promise<void
     throw new Error('Forbidden')
   }
 
-  // Only draft events can be deleted
-  if (event.status !== 'draft') {
-    throw new Error('Only draft events can be deleted')
+  // Only draft and cancelled events can be deleted
+  if (event.status !== 'draft' && event.status !== 'cancelled') {
+    throw new Error('Only draft or cancelled events can be deleted')
   }
 
   await Event.deleteOne({ _id: eventId })

@@ -6,14 +6,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function generateSlug(title: string): string {
-  const base = title
+export function generateBaseSlug(title: string): string {
+  return title
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-  const suffix = Math.random().toString(36).substring(2, 6)
-  return `${base}-${suffix}`
 }
 
 export function getPublicStatus(event: IEvent, activeCount: number): PublicStatus {

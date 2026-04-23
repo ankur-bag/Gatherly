@@ -38,15 +38,15 @@
   }
 
   h1 {
-    @apply font-display font-medium tracking-tight text-7xl sm:text-8xl lg:text-[9.5rem] leading-[0.85] text-balance;
+    @apply font-display font-medium tracking-tight text-6xl sm:text-7xl lg:text-7xl xl:text-9xl leading-[0.85] text-balance;
   }
 
   h2 {
-    @apply font-display font-medium tracking-tight text-5xl sm:text-6xl lg:text-7xl leading-[0.95] text-balance;
+    @apply font-display font-medium tracking-tight text-3xl sm:text-4xl lg:text-5xl xl:text-7xl leading-[0.95] text-balance;
   }
 
   h3 {
-    @apply font-display font-medium tracking-tight text-2xl sm:text-3xl lg:text-4xl leading-tight;
+    @apply font-display font-medium tracking-tight text-lg sm:text-xl lg:text-2xl leading-tight;
   }
 }
 
@@ -70,7 +70,7 @@
   }
 
   .bento-card {
-    @apply relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-10 transition-all duration-500 hover:shadow-framer hover:-translate-y-1 hover:border-orange/20 hover:bg-white;
+    @apply relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-6 lg:p-10 transition-all duration-500 hover:shadow-framer hover:-translate-y-1 hover:border-orange/20 hover:bg-white;
   }
 
   .section-container {

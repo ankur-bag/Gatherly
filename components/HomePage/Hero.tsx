@@ -29,16 +29,16 @@ const trustPoints = [
 
 export function Hero({ isSignedIn }: HeroProps) {
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-32 pb-24 overflow-hidden">
+    <section className="relative min-h-[100dvh] flex items-center justify-center pt-16 pb-8 lg:pt-20 lg:pb-12 xl:pt-32 xl:pb-24 overflow-hidden">
       <div className="section-container relative z-10">
-        <div className="flex flex-col items-center text-center max-w-5xl mx-auto mb-24">
+        <div className="flex flex-col items-center text-center max-w-5xl mx-auto mb-16 lg:mb-20 xl:mb-24">
           {/* Badge */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-5 py-2 backdrop-blur-sm mb-12 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-5 py-2 backdrop-blur-sm mb-6 lg:mb-12 shadow-sm"
           >
             <span className="flex h-2 w-2 rounded-full bg-orange animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-charcoal/60">
@@ -55,7 +55,7 @@ export function Hero({ isSignedIn }: HeroProps) {
             className="mb-10"
           >
             Run every event <br />
-            <span className="text-orange italic lg:text-[8.5rem] tracking-tight">Flawlessly.</span>
+            <span className="text-orange italic lg:text-[5.5rem] xl:text-[8.5rem] tracking-tight">Flawlessly.</span>
           </motion.h1>
 
           <motion.p 
@@ -63,7 +63,7 @@ export function Hero({ isSignedIn }: HeroProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-xl sm:text-2xl text-charcoal/50 leading-relaxed max-w-[45ch] text-balance mb-14 "
+            className="text-base sm:text-lg lg:text-xl xl:text-2xl text-charcoal/50 leading-relaxed max-w-[45ch] text-balance mb-8 lg:mb-14"
           >
             A high-fidelity command center for organizers who can't afford chaos. 
             The silent partner in high-stakes event operations.
@@ -104,7 +104,7 @@ export function Hero({ isSignedIn }: HeroProps) {
         </div>
 
         {/* Feature Cards / Bento Preview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8">
           {trustPoints.map(({ title, description, Icon }, index) => (
             <motion.div 
               key={title}

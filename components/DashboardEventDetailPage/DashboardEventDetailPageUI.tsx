@@ -143,7 +143,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
              
              {isPublic && (
                 <Link
-                  href={`/events/${event.slug}`}
+                  href={`/events/${event.slugBase}-${event._id}`}
                   target="_blank"
                   className="h-14 px-8 rounded-2xl glass border-black/5 text-charcoal font-bold flex items-center gap-3 hover:bg-black/5 transition-all shadow-sm"
                 >

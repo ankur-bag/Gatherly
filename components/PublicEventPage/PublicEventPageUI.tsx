@@ -37,13 +37,20 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
     async function fetchEvent() {
       try {
         const response = await fetch(`/api/events/slug/${slug}`)
-        if (!response.ok) {
-          if (response.status === 404) throw new Error('Event not found')
-          throw new Error('Failed to load event')
+        const body = (await response.json()) as { data?: PublicEventPayload; redirectUrl?: string; error?: string }
+        
+        if (body.redirectUrl) {
+          window.location.replace(body.redirectUrl)
+          return
         }
 
-        const body = (await response.json()) as { data: PublicEventPayload }
-        setEventPayload(body.data)
+        if (!response.ok) {
+          throw new Error(body.error || 'Failed to load event')
+        }
+
+        if (body.data) {
+          setEventPayload(body.data)
+        }
       } catch (fetchError) {
         setError(getErrorMessage(fetchError))
       } finally {

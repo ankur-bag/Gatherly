@@ -13,6 +13,7 @@ export interface IEvent extends Document {
   isOnline: boolean
   capacity: number
   registrationMode: RegistrationMode
+  slugBase: string
   slug: string
   status: EventStatus
   templateUsed?: string
@@ -33,7 +34,8 @@ const EventSchema = new Schema<IEvent>(
     isOnline: { type: Boolean, required: true, default: false },
     capacity: { type: Number, required: true },
     registrationMode: { type: String, enum: ['open', 'shortlisted'], required: true },
-    slug: { type: String, required: true, unique: true, index: true },
+    slugBase: { type: String, required: true, index: true },
+    slug: { type: String, required: true, index: true }, // Keeping temporarily for backward compatibility
     status: { type: String, enum: ['draft', 'published', 'cancelled'], default: 'draft' },
     templateUsed: { type: String },
     zoomMeetingId: { type: String },

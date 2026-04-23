@@ -1,12 +1,12 @@
 'use client'
 
 import DashboardLayout from '@/components/DashboardLayout'
-import { EVENT_TEMPLATES } from '@/lib/utils'
 import { RegistrationMode } from '@/types'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
-import { FiSave, FiMapPin, FiArrowLeft, FiInfo } from 'react-icons/fi'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { FiSave, FiMapPin, FiArrowLeft, FiInfo, FiTrash2 } from 'react-icons/fi'
 import Link from 'next/link'
+import { useAuth } from '@clerk/nextjs'
 
 interface EventFormState {
   title: string
@@ -16,56 +16,66 @@ interface EventFormState {
   isOnline: boolean
   capacity: number
   registrationMode: RegistrationMode
+  status: string
 }
 
-const INITIAL_FORM_STATE: EventFormState = {
-  title: '',
-  description: '',
-  dateTime: '',
-  venue: '',
-  isOnline: false,
-  capacity: 50,
-  registrationMode: 'open',
-}
-
-export function DashboardEventCreatePageUI() {
+export function DashboardEventEditPageUI({ eventId }: { eventId: string }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const templateId = searchParams?.get('template')
+  const { isLoaded } = useAuth()
+  
+  const [form, setForm] = useState<EventFormState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-  // Initialize form state with template prefill if provided
-  const getInitialForm = (): EventFormState => {
-    if (templateId) {
-      const template = EVENT_TEMPLATES.find((t) => t.id === templateId)
-      if (template?.prefill) {
-        return {
-          title: template.prefill.title || '',
-          description: template.prefill.description || '',
-          dateTime: '',
-          venue: '',
-          isOnline: template.prefill.isOnline,
-          capacity: template.prefill.capacity,
-          registrationMode: template.prefill.registrationMode,
+  useEffect(() => {
+    if (!isLoaded) return
+
+    async function fetchEvent() {
+      try {
+        const res = await fetch(`/api/events/${eventId}`)
+        const data = await res.json()
+        if (data.data) {
+          const event = data.data
+          // Format date for datetime-local input
+          const dt = new Date(event.dateTime)
+          const formattedDate = dt.toISOString().slice(0, 16)
+          
+          setForm({
+            title: event.title,
+            description: event.description,
+            dateTime: formattedDate,
+            venue: event.venue || '',
+            isOnline: event.isOnline,
+            capacity: event.capacity,
+            registrationMode: event.registrationMode,
+            status: event.status,
+          })
+        } else {
+          setError('Event not found')
         }
+      } catch (err) {
+        setError('Failed to load event')
+      } finally {
+        setLoading(false)
       }
     }
-    return INITIAL_FORM_STATE
-  }
 
-  const [form, setForm] = useState<EventFormState>(getInitialForm)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+    fetchEvent()
+  }, [eventId, isLoaded])
 
   const updateForm = <K extends keyof EventFormState>(
     field: K,
     value: EventFormState[K]
   ) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
+    setForm((prev) => prev ? ({ ...prev, [field]: value }) : null)
   }
 
-  const handleSubmit = async (e: React.FormEvent, status: 'draft' | 'published' = 'draft') => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (!form) return
+    
+    setSaving(true)
     setError('')
 
     try {
@@ -77,12 +87,10 @@ export function DashboardEventCreatePageUI() {
         isOnline: form.isOnline,
         capacity: Number(form.capacity),
         registrationMode: form.registrationMode,
-        templateUsed: templateId || undefined,
-        status: status,
       }
 
-      const res = await fetch('/api/events', {
-        method: 'POST',
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
@@ -90,16 +98,43 @@ export function DashboardEventCreatePageUI() {
       const json = await res.json()
 
       if (!res.ok) {
-        setError(json.error || 'Failed to create event')
+        setError(json.error || 'Failed to update event')
         return
       }
 
-      router.push('/dashboard')
+      router.push(`/dashboard/events/${eventId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
+  }
+
+  if (loading) {
+     return (
+       <DashboardLayout>
+         <div className="space-y-8 animate-pulse">
+            <div className="skeleton h-6 w-24" />
+            <div className="skeleton h-12 w-1/2 mt-8" />
+            <div className="skeleton h-64 w-full mt-12 rounded-3xl" />
+         </div>
+       </DashboardLayout>
+     )
+  }
+
+  if (error || !form) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-3xl border border-red-100 bg-red-50 p-8 text-red-600">
+          <h3 className="font-bold flex items-center gap-2">
+            <FiInfo /> {error || 'Event not found'}
+          </h3>
+          <Link href="/dashboard" className="mt-4 inline-flex items-center gap-2 font-bold hover:underline">
+            Back to Dashboard
+          </Link>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -107,34 +142,23 @@ export function DashboardEventCreatePageUI() {
       <div className="animate-reveal max-w-3xl">
         {/* Back Button */}
         <Link
-          href={templateId ? '/dashboard/events/template-selector' : '/dashboard'}
+          href={`/dashboard/events/${eventId}`}
           className="inline-flex items-center gap-2 text-sm font-bold text-charcoal/60 hover:text-charcoal transition-colors mb-8 group"
         >
           <FiArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
-          Back
+          Back to details
         </Link>
 
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-4xl font-display text-charcoal mb-2">Create New Event</h1>
-          <p className="text-lg text-charcoal/60 font-medium">
-            {templateId ? 'Customize your event details below' : 'Fill in the details to get started'}
-          </p>
+          <h1 className="text-4xl font-display text-charcoal mb-2">Edit Event</h1>
+          <p className="text-lg text-charcoal/60 font-medium">Update your operational flow details</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Error Alert */}
-          {error && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center gap-3">
-              <FiInfo size={18} className="flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
           {/* Section 1: Core Details */}
           <div className="space-y-5 pb-8 border-b border-charcoal/5">
-            {/* Event Name */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                 Event Name
@@ -144,12 +168,10 @@ export function DashboardEventCreatePageUI() {
                 value={form.title}
                 onChange={(e) => updateForm('title', e.target.value)}
                 required
-                placeholder="e.g., React Masterclass 2026"
-                className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
+                className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
               />
             </div>
 
-            {/* Description */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                 Description
@@ -158,9 +180,8 @@ export function DashboardEventCreatePageUI() {
                 value={form.description}
                 onChange={(e) => updateForm('description', e.target.value)}
                 required
-                placeholder="What is your event about? Give attendees the context..."
-                rows={3}
-                className="w-full rounded-lg bg-white border border-charcoal/8 px-4 py-3 font-medium text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all resize-none"
+                rows={4}
+                className="w-full rounded-lg bg-white border border-charcoal/8 px-4 py-3 font-medium text-charcoal focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all resize-none"
               />
             </div>
           </div>
@@ -168,7 +189,6 @@ export function DashboardEventCreatePageUI() {
           {/* Section 2: Date & Type */}
           <div className="space-y-5 pb-8 border-b border-charcoal/5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Date & Time */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                   Date & Time
@@ -182,7 +202,6 @@ export function DashboardEventCreatePageUI() {
                 />
               </div>
 
-              {/* Event Type Toggle */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                   Event Type
@@ -193,7 +212,7 @@ export function DashboardEventCreatePageUI() {
                     onClick={() => updateForm('isOnline', false)}
                     className={`flex-1 rounded-lg font-bold text-sm transition-all ${
                       !form.isOnline
-                        ? 'bg-charcoal text-white shadow-sm'
+                        ? 'bg-charcoal text-white'
                         : 'bg-white border border-charcoal/8 text-charcoal hover:bg-charcoal/2'
                     }`}
                   >
@@ -204,7 +223,7 @@ export function DashboardEventCreatePageUI() {
                     onClick={() => updateForm('isOnline', true)}
                     className={`flex-1 rounded-lg font-bold text-sm transition-all ${
                       form.isOnline
-                        ? 'bg-charcoal text-white shadow-sm'
+                        ? 'bg-charcoal text-white'
                         : 'bg-white border border-charcoal/8 text-charcoal hover:bg-charcoal/2'
                     }`}
                   >
@@ -214,7 +233,6 @@ export function DashboardEventCreatePageUI() {
               </div>
             </div>
 
-            {/* Venue / Location */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
                 <FiMapPin size={12} />
@@ -225,16 +243,13 @@ export function DashboardEventCreatePageUI() {
                 value={form.venue}
                 onChange={(e) => updateForm('venue', e.target.value)}
                 required={!form.isOnline}
-                placeholder={form.isOnline ? 'e.g., https://zoom.us/j/...' : 'e.g., 123 Main St, San Francisco'}
-                className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
+                className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          {/* Section 3: Capacity & Registration */}
           <div className="space-y-5 pb-8 border-b border-charcoal/5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Capacity */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                   Total Capacity
@@ -249,13 +264,11 @@ export function DashboardEventCreatePageUI() {
                 />
               </div>
 
-              {/* Registration Mode */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                   Registration Flow
                 </label>
                 <select
-                  name="registrationMode"
                   value={form.registrationMode}
                   onChange={(e) => updateForm('registrationMode', e.target.value as RegistrationMode)}
                   className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all cursor-pointer"
@@ -265,62 +278,24 @@ export function DashboardEventCreatePageUI() {
                 </select>
               </div>
             </div>
-
-            {/* Info Box */}
-            <div className="p-4 rounded-lg bg-beige/30 border border-beige/50">
-              <p className="text-sm font-medium text-charcoal/70">
-                <span className="font-bold">Auto-confirm:</span> Attendees are instantly registered.
-                <br />
-                <span className="font-bold">Manual review:</span> You approve each registration.
-              </p>
-            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 pt-4">
+          <div className="flex items-center gap-4">
             <button
-              type="button"
-              onClick={() => {
-                const formElement = document.querySelector('form');
-                if (formElement?.checkValidity()) {
-                  handleSubmit({ preventDefault: () => {} } as any, 'draft');
-                } else {
-                  formElement?.reportValidity();
-                }
-              }}
-              disabled={loading}
-              className="flex-1 h-14 bg-white border border-charcoal/10 text-charcoal rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-charcoal/2 transition-all disabled:opacity-50"
+              type="submit"
+              disabled={saving}
+              className="flex-1 h-14 bg-charcoal text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-orange transition-all disabled:opacity-50"
             >
-              {loading ? 'Saving...' : (
+              {saving ? 'Saving changes...' : (
                 <>
                   <FiSave size={18} />
-                  Save as Draft
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const formElement = document.querySelector('form');
-                if (formElement?.checkValidity()) {
-                  handleSubmit({ preventDefault: () => {} } as any, 'published');
-                } else {
-                  formElement?.reportValidity();
-                }
-              }}
-              disabled={loading}
-              className="flex-[1.5] h-14 bg-charcoal text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-orange transition-all disabled:opacity-50 group"
-            >
-              {loading ? 'Launching...' : (
-                <>
-                  <FiInfo size={18} className="group-hover:rotate-12 transition-transform" />
-                  Launch Event
+                  Save Changes
                 </>
               )}
             </button>
             <Link
-              href="/dashboard"
-              className="h-14 px-6 rounded-2xl flex items-center justify-center text-charcoal/40 font-bold hover:text-charcoal transition-all"
+              href={`/dashboard/events/${eventId}`}
+              className="h-14 px-8 rounded-2xl flex items-center justify-center text-charcoal/40 font-bold hover:text-charcoal transition-all"
             >
               Cancel
             </Link>

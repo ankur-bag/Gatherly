@@ -5,8 +5,9 @@ import * as RegistrationController from '@/controllers/RegistrationController'
 
 bootstrap()
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -19,7 +20,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return NextResponse.json({ error: 'Missing status' }, { status: 400 })
     }
 
-    const result = await RegistrationController.updateStatus(userId, params.id, status)
+    const result = await RegistrationController.updateStatus(userId, id, status)
     return NextResponse.json({ data: result })
   } catch (error: any) {
     console.error('PATCH /api/registrations/[id]/status error:', error)

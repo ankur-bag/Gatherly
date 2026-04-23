@@ -4,9 +4,15 @@ import * as EventController from '@/controllers/EventController'
 
 bootstrap()
 
-export async function GET(req: Request, { params }: { params: { slug: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const result = await EventController.getBySlug(params.slug)
+    const { slug } = await params
+    const result = await EventController.getBySlug(slug)
+    
+    if (result.redirectUrl) {
+      return NextResponse.json({ redirectUrl: result.redirectUrl }, { status: 301 })
+    }
+
     return NextResponse.json({ data: result })
   } catch (error: any) {
     console.error('GET /api/events/slug/[slug] error:', error)
