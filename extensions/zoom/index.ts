@@ -1,18 +1,85 @@
 import { onHook } from '@/lib/hooks'
+import { dbConnect } from '@/lib/mongodb'
+import Event from '@/models/Event'
+import { createMeeting, deleteMeeting, updateMeeting } from './service'
 
 export function registerZoomExtension() {
-  // Zoom extension will be fully implemented in Task 11
-  // For now, just register the hooks without implementation
-
   onHook('event.published', async ({ event, organizer }) => {
-    // TODO: Create Zoom meeting if event.isOnline
+    if (!event.isOnline) {
+      return
+    }
+
+    try {
+      await dbConnect()
+      await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'pending' })
+
+      const meeting = await createMeeting(event, organizer)
+
+      await Event.findByIdAndUpdate(event._id, {
+        zoomMeetingId: meeting.meetingId,
+        zoomJoinUrl: meeting.joinUrl,
+        zoomSyncStatus: 'synced',
+      })
+    } catch (error) {
+      console.error('Zoom publish sync failed:', error)
+      await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'failed' })
+    }
   })
 
   onHook('event.updated', async ({ event, organizer, changedFields }) => {
-    // TODO: Update Zoom meeting if title/dateTime changed
+    if (!event.isOnline) {
+      return
+    }
+
+    const shouldSync = changedFields.includes('title') || changedFields.includes('dateTime')
+    if (!shouldSync) {
+      return
+    }
+
+    try {
+      await dbConnect()
+      await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'pending' })
+
+      if (event.zoomMeetingId) {
+        await updateMeeting(event.zoomMeetingId, event, organizer)
+        await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'synced' })
+        return
+      }
+
+      const meeting = await createMeeting(event, organizer)
+      await Event.findByIdAndUpdate(event._id, {
+        zoomMeetingId: meeting.meetingId,
+        zoomJoinUrl: meeting.joinUrl,
+        zoomSyncStatus: 'synced',
+      })
+    } catch (error) {
+      console.error('Zoom update sync failed:', error)
+      await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'failed' })
+    }
   })
 
-  onHook('event.cancelled', async ({ event, organizer, activeRegistrations }) => {
-    // TODO: Delete Zoom meeting
+  onHook('event.cancelled', async ({ event, organizer }) => {
+    try {
+      await dbConnect()
+
+      if (!event.zoomMeetingId) {
+        await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'cancelled' })
+        return
+      }
+
+      await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'pending' })
+      await deleteMeeting(event.zoomMeetingId, organizer)
+
+      await Event.findByIdAndUpdate(event._id, {
+        zoomSyncStatus: 'cancelled',
+        $unset: {
+          zoomMeetingId: 1,
+          zoomJoinUrl: 1,
+        },
+      })
+    } catch (error) {
+      console.error('Zoom cancel sync failed:', error)
+      await Event.findByIdAndUpdate(event._id, { zoomSyncStatus: 'failed' })
+    }
   })
 }

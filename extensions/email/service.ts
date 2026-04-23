@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 import { IRegistration, IEvent, IUser } from '@/types'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'GoAvo <no-reply@yourdomain.com>'
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Avento.ai <no-reply@yourdomain.com>'
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
