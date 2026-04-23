@@ -40,4 +40,5 @@ export interface HookPayload {
   'event.published': { event: IEvent; organizer: IUser }
   'event.updated': { event: IEvent; organizer: IUser; changedFields: string[] }
   'event.cancelled': { event: IEvent; organizer: IUser; activeRegistrations: IRegistration[] }
+  'event.reminder': { eventId: string }
 }

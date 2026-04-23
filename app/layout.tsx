@@ -15,13 +15,15 @@ const display = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Avento — The Event Management Platform",
+  title: "Avento — Event Management Platform",
   description:
     "Connects every step from RSVP to revenue, delivering clear reports and next-best actions to improve ROI by 20-35%",
   icons: {
     icon: "/avento.svg",
   },
 };
+
+import { ToastProvider } from "@/components/ui/Toast";
 
 export default function RootLayout({
   children,
@@ -30,8 +32,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
-      <body className="antialiased">
-        <ClerkProvider>{children}</ClerkProvider>
+      <body className="antialiased" suppressHydrationWarning>
+        <ClerkProvider>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

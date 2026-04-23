@@ -6,10 +6,25 @@ import Registration from '@/models/Registration'
 import User from '@/models/User'
 import { IEvent, CreateEventInput, UpdateEventInput } from '@/types'
 
-export async function list(userId: string): Promise<IEvent[]> {
+export async function list(userId: string): Promise<any[]> {
   await dbConnect()
   const events = await Event.find({ organizerClerkId: userId }).sort({ createdAt: -1 })
-  return events.map((doc) => doc.toObject())
+  
+  const eventsWithCount = await Promise.all(
+    events.map(async (event) => {
+      const count = await Registration.countDocuments({ 
+        eventId: event._id,
+        status: 'confirmed'
+      })
+      return {
+        ...event.toObject(),
+        registrationsCount: count,
+        activeCount: count // Backward compatibility
+      }
+    })
+  )
+  
+  return eventsWithCount
 }
 
 export async function create(userId: string, body: CreateEventInput): Promise<IEvent> {
@@ -33,7 +48,7 @@ export async function create(userId: string, body: CreateEventInput): Promise<IE
   return event.toObject()
 }
 
-export async function getById(userId: string, eventId: string): Promise<IEvent> {
+export async function getById(userId: string, eventId: string): Promise<any> {
   await dbConnect()
 
   const event = await Event.findById(eventId)
@@ -46,7 +61,15 @@ export async function getById(userId: string, eventId: string): Promise<IEvent> 
     throw new Error('Forbidden')
   }
 
-  return event.toObject()
+  const count = await Registration.countDocuments({
+    eventId,
+    status: 'confirmed',
+  })
+
+  return {
+    ...event.toObject(),
+    registrationsCount: count,
+  }
 }
 
 export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; publicStatus: string | null; activeCount: number; redirectUrl?: string }> {
@@ -91,10 +114,10 @@ export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; pub
     }
   }
 
-  // Compute active count (only registered + approved)
+  // Compute active count (only confirmed)
   const activeCount = await Registration.countDocuments({
     eventId: event._id,
-    status: { $in: ['registered', 'approved'] },
+    status: 'confirmed',
   })
 
   // Compute public status
@@ -242,7 +265,7 @@ export async function cancel(userId: string, eventId: string): Promise<IEvent> {
   // Fetch all active registrations for hook
   const activeRegistrations = await Registration.find({
     eventId,
-    status: { $in: ['registered', 'approved'] },
+    status: 'confirmed',
   })
 
   // Get organizer for hook
@@ -272,10 +295,6 @@ export async function deleteEvent(userId: string, eventId: string): Promise<void
     throw new Error('Forbidden')
   }
 
-  // Only draft and cancelled events can be deleted
-  if (event.status !== 'draft' && event.status !== 'cancelled') {
-    throw new Error('Only draft or cancelled events can be deleted')
-  }
-
+  // Delete event and registrations (optional: should probably delete registrations too or just the event)
   await Event.deleteOne({ _id: eventId })
 }

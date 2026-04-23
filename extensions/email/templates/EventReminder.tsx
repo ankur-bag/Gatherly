@@ -1,40 +1,47 @@
 import * as React from 'react'
 import BaseLayout from './BaseLayout'
-import { Text, Link, Section } from '@react-email/components'
+import { Text, Section } from '@react-email/components'
 
-interface RegistrationConfirmedProps {
+interface EventReminderProps {
   attendeeName: string
   eventTitle: string
   eventDateTime: string
+  venueOrJoinUrl: string
+  isOnline: boolean
 }
 
-export default function RegistrationConfirmed({
+export default function EventReminder({
   attendeeName,
   eventTitle,
   eventDateTime,
-}) {
+  venueOrJoinUrl,
+  isOnline,
+}: EventReminderProps) {
   return (
     <BaseLayout 
-      previewText={`Success! You're registered for ${eventTitle}`}
-      title="You're Registered!"
+      previewText={`Reminder: ${eventTitle} is starting in 24 hours!`}
+      title="Upcoming Event Reminder"
     >
       <Text style={text}>
         Hi {attendeeName},
       </Text>
       <Text style={text}>
-        Your registration for <strong>{eventTitle}</strong> is confirmed. We've saved a spot for you!
+        This is a friendly reminder that <strong>{eventTitle}</strong> is happening in exactly 24 hours. We can't wait to see you there!
       </Text>
       
       <Section style={infoCard}>
         <Text style={infoLabel}>Event Details</Text>
         <Text style={infoValue}>{eventTitle}</Text>
+        
         <Text style={infoLabel}>Date & Time</Text>
         <Text style={infoValue}>{eventDateTime}</Text>
+        
+        <Text style={infoLabel}>{isOnline ? 'Join Link' : 'Venue'}</Text>
+        <Text style={infoValue}>{venueOrJoinUrl || 'TBA'}</Text>
       </Section>
 
-
       <Text style={text}>
-        We look forward to seeing you there!
+        If you have any questions or can no longer attend, please feel free to reach out.
       </Text>
     </BaseLayout>
   )
@@ -68,4 +75,3 @@ const infoValue = {
   color: '#1A1A1A',
   margin: '0 0 16px',
 }
-

@@ -3,16 +3,25 @@
 import DashboardLayout from '@/components/DashboardLayout'
 import { StatusBadge, ZoomSyncBadge } from '@/components/StatusBadges'
 import { IEvent } from '@/types'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { FiCalendar, FiEdit2, FiEye, FiPlus, FiUsers, FiArrowLeft } from 'react-icons/fi'
+import { useToast } from '../ui/Toast'
+import { IRegistration } from '@/types'
+
+interface IEventWithCount extends IEvent {
+  registrationsCount?: number
+  activeCount?: number
+}
 
 export function DashboardPageUI() {
   const router = useRouter()
+  const { user } = useUser()
   const { isLoaded } = useAuth()
-  const [events, setEvents] = useState<IEvent[]>([])
+  const { showToast } = useToast()
+  const [events, setEvents] = useState<IEventWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
@@ -39,8 +48,9 @@ export function DashboardPageUI() {
       const res = await fetch(`/api/events/${eventId}/publish`, { method: 'POST' })
       if (!res.ok) throw new Error('Failed to launch')
       await fetchEvents()
+      showToast('Event launched successfully', 'success')
     } catch (err) {
-      alert('Failed to launch event')
+      showToast('Failed to launch event', 'error')
     } finally {
       setProcessingId(null)
     }
@@ -56,8 +66,9 @@ export function DashboardPageUI() {
          throw new Error(error.error || 'Failed to delete')
       }
       await fetchEvents()
+      showToast('Event deleted successfully', 'success')
     } catch (err: any) {
-      alert(err.message)
+      showToast(err.message, 'error')
     } finally {
       setProcessingId(null)
     }
@@ -66,7 +77,7 @@ export function DashboardPageUI() {
   const copyPublicLink = (event: IEvent) => {
     const url = `${window.location.origin}/events/${event.slugBase}-${event._id}`
     navigator.clipboard.writeText(url)
-    alert('Link copied to clipboard!')
+    showToast('Link copied to clipboard')
   }
 
   if (!isLoaded || loading) {
@@ -95,7 +106,7 @@ export function DashboardPageUI() {
       <div className="animate-reveal space-y-10">
         {/* Back Button */}
         <button
-          onClick={() => router.back()}
+          onClick={() => redirect('/')}
           className="inline-flex items-center gap-2 text-sm font-bold text-charcoal/60 hover:text-charcoal transition-colors mb-2 group cursor-pointer"
         >
           <FiArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
@@ -103,19 +114,18 @@ export function DashboardPageUI() {
         </button>
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8 pb-8 border-b border-charcoal/5">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-charcoal/5">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-beige/40 text-[10px] font-bold uppercase tracking-widest text-charcoal/40 mb-6 border border-charcoal/5">
-              Event Management
-            </div>
-            <h1 className="text-5xl sm:text-6xl text-charcoal leading-none mb-4 font-display tracking-tight">Your Events</h1>
-            <p className="text-lg text-charcoal/40 font-medium max-w-xl">Manage and organize your operational flows with precision.</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl text-charcoal leading-tight mb-2 font-display tracking-tight">
+              Welcome, {user?.firstName || 'Organizer'}
+            </h1>
+            <p className="text-xs sm:text-sm lg:text-base text-charcoal/40 font-medium max-w-sm">Here go your events</p>
           </div>
           <Link
             href="/dashboard/events/template-selector"
-            className="h-16 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-3 shadow-xl hover:bg-orange transition-all duration-500 hover:-translate-y-1 active:scale-95 translate-gpu group"
+            className="h-11 px-6 rounded-xl bg-charcoal text-white text-xs font-bold inline-flex items-center gap-2 shadow-lg hover:bg-orange transition-all duration-500 hover:-translate-y-1 active:scale-95 translate-gpu group"
           >
-            <FiPlus size={22} className="transition-transform group-hover:rotate-90" />
+            <FiPlus size={18} className="transition-transform group-hover:rotate-90" />
             Create New Event
           </Link>
         </div>
@@ -155,7 +165,7 @@ export function DashboardPageUI() {
                       event={event} 
                       onLaunch={handleLaunch} 
                       onDelete={handleDelete} 
-                      onCopyStatus={() => copyPublicLink(event.slug || '')}
+                      onCopyStatus={() => copyPublicLink(event)}
                       processingId={processingId}
                     />
                   ))}
@@ -202,36 +212,45 @@ function EventCard({
   onCopyStatus, 
   processingId 
 }: { 
-  event: IEvent, 
+  event: IEventWithCount, 
   onLaunch: (id: string) => void, 
   onDelete: (id: string) => void,
   onCopyStatus: () => void,
   processingId: string | null
 }) {
   return (
-    <div className="bento-card !p-0 overflow-hidden group border-none">
+    <div 
+      className="bento-card !p-0 overflow-hidden group border-none cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+      onClick={(e) => {
+        // Prevent navigation if clicking buttons
+        if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a')) {
+          return
+        }
+        window.location.href = `/dashboard/events/${event._id}`
+      }}
+    >
       <div className="flex flex-col md:flex-row md:items-stretch">
          {/* Date Column */}
-         <div className="w-full md:w-52 bg-white/40 flex flex-col items-center justify-center p-10 border-b md:border-b-0 md:border-r border-charcoal/5 group-hover:bg-beige/30 transition-colors duration-500">
-            <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-charcoal/30 mb-3">
+         <div className="w-full md:w-28 lg:w-32 bg-white/40 flex flex-col items-center justify-center p-4 lg:p-6 border-b md:border-b-0 md:border-r border-charcoal/5 group-hover:bg-beige/30 transition-colors duration-500">
+            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-charcoal/30 mb-1">
                {new Date(event.dateTime).toLocaleDateString('en-US', { weekday: 'short' })}
             </span>
-            <span className="text-6xl font-display text-charcoal leading-none tracking-tighter">
+            <span className="text-3xl lg:text-4xl font-display text-charcoal leading-none tracking-tighter">
                {new Date(event.dateTime).getDate()}
             </span>
-            <span className="text-sm font-bold text-orange mt-3 tracking-[0.2em] uppercase">
+            <span className="text-[10px] font-bold text-orange mt-1 tracking-[0.1em] uppercase">
                {new Date(event.dateTime).toLocaleDateString('en-US', { month: 'short' })}
             </span>
          </div>
 
          {/* Main Content */}
-         <div className="flex-1 p-10 flex flex-col justify-between">
-            <div className="flex flex-wrap items-start justify-between gap-6 mb-4">
+         <div className="flex-1 p-4 lg:p-6 flex flex-col justify-between">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
                <div className="min-w-0">
-                  <h3 className="text-3xl font-display text-charcoal group-hover:text-orange transition-colors truncate mb-3">
+                  <h3 className="text-xl lg:text-2xl font-display text-charcoal group-hover:text-orange transition-colors truncate mb-1">
                      {event.title}
                   </h3>
-                  <p className="text-base text-charcoal/40 leading-relaxed font-medium line-clamp-2 max-w-2xl">{event.description}</p>
+                  <p className="text-xs lg:text-sm text-charcoal/40 leading-relaxed font-medium line-clamp-2 max-w-xl">{event.description}</p>
                </div>
                <div className="flex gap-2">
                    <StatusBadge status={event.status} />
@@ -243,7 +262,7 @@ function EventCard({
                <div className="flex items-center gap-8">
                   <div className="flex items-center gap-3 text-xs font-bold text-charcoal/60 uppercase tracking-widest">
                      <FiUsers size={16} className="text-orange" />
-                     {event.capacity} Capacity
+                     {event.registrationsCount || 0} / {event.capacity} Registered
                   </div>
                   <div className="flex items-center gap-3 text-xs font-bold text-charcoal/60 uppercase tracking-widest">
                      <FiCalendar size={16} className="text-orange" />
@@ -256,7 +275,7 @@ function EventCard({
                      <button
                        onClick={() => onLaunch(event._id?.toString() || '')}
                        disabled={processingId === event._id?.toString()}
-                       className="h-12 px-8 rounded-xl bg-orange text-white font-bold text-xs flex items-center gap-2 hover:bg-orange-hover transition-all duration-300 shadow-md hover:shadow-orange/20 disabled:opacity-50"
+                       className="h-10 px-5 rounded-xl bg-orange text-white font-bold text-[11px] flex items-center gap-2 hover:bg-orange-hover transition-all duration-300 shadow-md hover:shadow-orange/20 disabled:opacity-50"
                      >
                        {processingId === event._id?.toString() ? 'Launching...' : 'Launch Event'}
                      </button>
@@ -265,7 +284,7 @@ function EventCard({
                   {event.status === 'published' && (
                      <button
                        onClick={onCopyStatus}
-                       className="h-12 px-6 rounded-xl bg-beige text-charcoal font-bold text-xs flex items-center gap-2 hover:bg-charcoal hover:text-white transition-all shadow-sm"
+                       className="h-10 px-4 rounded-xl cursor-pointer bg-beige text-charcoal font-bold text-[11px] flex items-center gap-2 hover:bg-charcoal hover:text-white transition-all shadow-sm"
                      >
                        Copy Link
                      </button>
@@ -273,14 +292,14 @@ function EventCard({
 
                   <Link
                      href={`/dashboard/events/${event._id}/attendees`}
-                     className="h-12 px-8 rounded-xl bg-charcoal text-white font-bold text-xs flex items-center gap-2 hover:bg-orange transition-all duration-300 shadow-md hover:shadow-orange/20"
+                     className="h-10 px-5 rounded-xl bg-charcoal cursor-pointer text-white font-bold text-[11px] flex items-center gap-2 hover:bg-orange transition-all duration-300 shadow-md hover:shadow-orange/20"
                   >
                      Attendees
                   </Link>
                   
                   <Link
                      href={`/dashboard/events/${event._id}/edit`}
-                     className="h-12 w-12 rounded-xl glass border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-beige transition-all shadow-sm"
+                     className="h-10 w-10 rounded-xl glass cursor-pointer border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-beige transition-all shadow-sm"
                   >
                      <FiEdit2 size={18} />
                   </Link>
@@ -288,7 +307,7 @@ function EventCard({
                   <button
                      onClick={() => onDelete(event._id?.toString() || '')}
                      disabled={processingId === event._id?.toString()}
-                     className="h-12 w-12 rounded-xl glass border-red-100 flex items-center justify-center text-red-500 hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
+                     className="h-10 w-10 rounded-xl cursor-pointer glass border-red-100 flex items-center justify-center text-red-500 hover:bg-red-50 transition-all shadow-sm disabled:opacity-50"
                   >
                      <FiPlus size={18} className="rotate-45" />
                   </button>
@@ -296,9 +315,9 @@ function EventCard({
                   <Link
                      href={`/events/${event.slugBase}-${event._id}`}
                      target="_blank"
-                     className="h-12 w-12 rounded-xl glass border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-orange hover:text-white transition-all shadow-sm"
+                     className="h-10 w-14 rounded-xl cursor-pointer glass border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-orange hover:text-white transition-all shadow-sm"
                   >
-                     <FiEye size={18} />
+                    <FiEye size={18} />
                   </Link>
                </div>
             </div>

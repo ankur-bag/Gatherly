@@ -7,10 +7,10 @@ import { IRegistration, CreateRegistrationInput, RegistrationStatus } from '@/ty
 
 // RSVP state machine transitions
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ['approved', 'rejected'],
-  approved: ['revoked'],
-  registered: ['revoked'],
-  // rejected and revoked are terminal states
+  pending: ['confirmed', 'rejected'],
+  confirmed: ['revoked'],
+  rejected: ['confirmed'],
+  revoked: ['confirmed'],
 }
 
 export async function list(
@@ -66,10 +66,10 @@ export async function create(eventId: string, body: CreateRegistrationInput): Pr
     throw new Error('Not found')
   }
 
-  // Compute active count and public status
+  // Compute active count (only confirmed)
   const activeCount = await Registration.countDocuments({
     eventId,
-    status: { $in: ['registered', 'approved'] },
+    status: 'confirmed',
   })
 
   const publicStatus = getPublicStatus(event, activeCount)
@@ -90,7 +90,7 @@ export async function create(eventId: string, body: CreateRegistrationInput): Pr
   }
 
   // Determine initial status based on registration mode
-  const initialStatus: RegistrationStatus = event.registrationMode === 'open' ? 'registered' : 'pending'
+  const initialStatus: RegistrationStatus = event.registrationMode === 'open' ? 'confirmed' : 'pending'
 
   const registration = await Registration.create({
     eventId,
@@ -133,10 +133,10 @@ export async function updateStatus(userId: string, registrationId: string, newSt
   }
 
   // If approving, re-check capacity
-  if (newStatus === 'approved') {
+  if (newStatus === 'confirmed') {
     const activeCount = await Registration.countDocuments({
       eventId: event._id,
-      status: { $in: ['registered', 'approved'] },
+      status: 'confirmed',
     })
 
     if (activeCount >= event.capacity) {
@@ -157,9 +157,8 @@ export async function updateStatus(userId: string, registrationId: string, newSt
 
   // Fire appropriate hook based on new status
   const hookMap: Record<RegistrationStatus, string> = {
-    pending: '', // no hook for transitions to pending
-    registered: '', // no hook for transitions to registered
-    approved: 'registration.approved',
+    pending: '', 
+    confirmed: 'registration.confirmed',
     rejected: 'registration.rejected',
     revoked: 'registration.revoked',
   }
@@ -173,4 +172,21 @@ export async function updateStatus(userId: string, registrationId: string, newSt
   }
 
   return updatedRegistration.toObject()
+}
+
+export async function bulkUpdateStatus(userId: string, registrationIds: string[], newStatus: RegistrationStatus): Promise<{ successful: number, failed: number }> {
+  let successful = 0
+  let failed = 0
+
+  for (const id of registrationIds) {
+    try {
+      await updateStatus(userId, id, newStatus)
+      successful++
+    } catch (error) {
+      console.error(`Failed to update registration ${id}:`, error)
+      failed++
+    }
+  }
+
+  return { successful, failed }
 }

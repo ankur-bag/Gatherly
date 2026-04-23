@@ -1,24 +1,35 @@
-import { auth } from '@clerk/nextjs/server'
+import { currentUser, auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { bootstrap } from '@/lib/bootstrap'
-import * as UserController from '@/controllers/UserController'
+import { dbConnect } from '@/lib/mongodb'
+import User from '@/models/User'
 
-bootstrap()
-
-export async function GET(req: Request) {
+export async function POST() {
   try {
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const result = await UserController.getByClerkId(userId)
-    return NextResponse.json({ data: result })
-  } catch (error: any) {
-    console.error('GET /api/users/me error:', error)
-    if (error.message === 'Not found') {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    await dbConnect()
+    const clerkUser = await currentUser()
+
+    if (!clerkUser) {
+      return NextResponse.json({ error: 'Clerk user not found' }, { status: 404 })
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+
+    const user = await User.findOneAndUpdate(
+      { clerkId: userId },
+      {
+        clerkId: userId,
+        name: clerkUser.fullName || `${clerkUser.firstName} ${clerkUser.lastName}`.trim() || 'User',
+        email: clerkUser.emailAddresses[0]?.emailAddress,
+      },
+      { upsert: true, new: true }
+    )
+
+    return NextResponse.json({ data: user.toObject() })
+  } catch (error: any) {
+    console.error('POST /api/users/me error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

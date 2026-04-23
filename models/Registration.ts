@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose'
 
-export type RegistrationStatus = 'pending' | 'registered' | 'approved' | 'rejected' | 'revoked'
+export type RegistrationStatus = 'pending' | 'confirmed' | 'rejected' | 'revoked'
 
 export interface IRegistration extends Document {
   eventId: Types.ObjectId
@@ -16,7 +16,7 @@ const RegistrationSchema = new Schema<IRegistration>(
     eventId: { type: Schema.Types.ObjectId, ref: 'Event', required: true, index: true },
     attendeeName: { type: String, required: true },
     attendeeEmail: { type: String, required: true },
-    status: { type: String, enum: ['pending', 'registered', 'approved', 'rejected', 'revoked'], default: 'registered' },
+    status: { type: String, enum: ['pending', 'confirmed', 'rejected', 'revoked'], default: 'pending' },
   },
   { timestamps: true }
 )

@@ -116,10 +116,10 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
               <StatusBadge status={event.status} />
               {event.isOnline && event.zoomSyncStatus && <ZoomSyncBadge syncStatus={event.zoomSyncStatus} />}
             </div>
-            <h1 className="text-4xl lg:text-5xl font-medium text-charcoal leading-none mb-6">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium text-charcoal leading-tight mb-3 lg:mb-4">
               {event.title}
             </h1>
-            <p className="text-lg text-charcoal/50 leading-relaxed font-medium">{event.description}</p>
+            <p className="text-xs lg:text-sm text-charcoal/50 leading-relaxed font-medium">{event.description}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -127,7 +127,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
                 <button
                   onClick={() => handleAction('publish')}
                   disabled={actionLoading}
-                  className="h-14 px-8 rounded-2xl bg-orange text-white font-bold flex items-center gap-3 shadow-lg shadow-orange/20 hover:-translate-y-1 transition-all disabled:opacity-50 cursor-pointer"
+                  className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl bg-orange text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-orange/20 hover:-translate-y-1 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   Publish Event
                 </button>
@@ -135,7 +135,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
                 <button
                   onClick={() => handleAction('cancel')}
                   disabled={actionLoading}
-                  className="h-14 px-8 rounded-2xl glass border-red-100 text-red-500 font-bold flex items-center gap-3 hover:bg-red-50 transition-all disabled:opacity-50 cursor-pointer"
+                  className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl glass border-red-100 text-red-500 text-xs font-bold flex items-center gap-2 hover:bg-red-50 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   Cancel Event
                 </button>
@@ -145,7 +145,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
                 <Link
                   href={`/events/${event.slugBase}-${event._id}`}
                   target="_blank"
-                  className="h-14 px-8 rounded-2xl glass border-black/5 text-charcoal font-bold flex items-center gap-3 hover:bg-black/5 transition-all shadow-sm"
+                  className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl glass border-black/5 text-charcoal text-xs font-bold flex items-center gap-2 hover:bg-black/5 transition-all shadow-sm"
                 >
                   <FiGlobe size={20} />
                   View Public
@@ -181,7 +181,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
            </div>
            <div className="bento-card">
               <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-charcoal/30 mb-3">
-                 <FiUsers size={14} className="text-orange" /> Occupancy
+                 <FiUsers size={14} className="text-orange" /> Registered
               </p>
               <p className="text-lg font-bold text-charcoal">
                  <span className="text-orange">{event.registrationsCount || 0}</span>

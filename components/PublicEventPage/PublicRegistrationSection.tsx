@@ -4,6 +4,7 @@ import { FeedbackState, PublicStatus, RegistrationFormState } from "./types";
 interface PublicRegistrationSectionProps {
   publicStatus: PublicStatus;
   registered: boolean;
+  registrationStatus?: string; // New field
   registering: boolean;
   formData: RegistrationFormState;
   feedback: FeedbackState | null;
@@ -23,6 +24,7 @@ function statusMessage(status: PublicStatus): string {
 export function PublicRegistrationSection({
   publicStatus,
   registered,
+  registrationStatus,
   registering,
   formData,
   feedback,
@@ -31,20 +33,32 @@ export function PublicRegistrationSection({
   onSubmit,
 }: PublicRegistrationSectionProps) {
   if (registered) {
+    const isPending = registrationStatus === 'pending'
+
     return (
-      <section className="rounded-xl border border-[#bbf7d0]/50 bg-[#e8f5ef] p-6 lg:p-8">
+      <section className={`rounded-xl border p-6 lg:p-8 ${
+        isPending 
+          ? 'border-orange/20 bg-orange/5' 
+          : 'border-[#bbf7d0]/50 bg-[#e8f5ef]'
+      }`}>
         <div className="flex items-start gap-4">
-          <FiCheckCircle className="mt-0.5 text-[#2d9d6a]" size={24} />
+          {isPending 
+            ? <FiInfo className="mt-0.5 text-orange" size={24} />
+            : <FiCheckCircle className="mt-0.5 text-[#2d9d6a]" size={24} />
+          }
           <div>
             <h2
-              className="text-xl font-bold text-[#1d7d4f]"
+              className={`text-xl font-bold ${isPending ? 'text-charcoal' : 'text-[#1d7d4f]'}`}
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Registration received
+              {isPending ? 'Registration under review' : 'Registration received'}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-[#1d7d4f]/80">
-              {feedback?.message ||
-                "Please check your email for your event confirmation and updates."}
+            <p className={`mt-2 text-sm leading-relaxed ${isPending ? 'text-charcoal/60' : 'text-[#1d7d4f]/80'}`}>
+              {feedback?.message || (
+                isPending 
+                  ? "Your registration is under review. You will be notified once approved."
+                  : "You are successfully registered for this event."
+              )}
             </p>
           </div>
         </div>

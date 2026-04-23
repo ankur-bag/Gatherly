@@ -2,17 +2,29 @@ import { render } from '@react-email/render'
 import { Resend } from 'resend'
 import { IRegistration, IEvent, IUser } from '@/types'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+
+function getResend() {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      console.error('[Resend] Missing RESEND_API_KEY in environment')
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return _resend
+}
+
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Avento.ai <no-reply@yourdomain.com>'
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
-    await resend.emails.send({
+    const response = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
       subject,
       html,
     })
+    console.log(`Email to ${to} sent successfully:`, JSON.stringify(response, null, 2))
   } catch (error) {
     console.error('Failed to send email:', error)
     // Don't throw — extensions should never throw to client
@@ -22,12 +34,11 @@ async function sendEmail(to: string, subject: string, html: string) {
 export async function sendRegistrationConfirmed(registration: IRegistration, event: IEvent) {
   try {
     const RegistrationConfirmed = (await import('./templates/RegistrationConfirmed').then((m) => m.default))
-    const html = render(
+    const html = await render(
       RegistrationConfirmed({
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
         eventDateTime: new Date(event.dateTime).toLocaleString(),
-        eventLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/e/${event.slug}`,
       })
     )
     await sendEmail(registration.attendeeEmail, `You are registered for ${event.title}`, html)
@@ -39,7 +50,7 @@ export async function sendRegistrationConfirmed(registration: IRegistration, eve
 export async function sendUnderReview(registration: IRegistration, event: IEvent) {
   try {
     const UnderReview = (await import('./templates/UnderReview').then((m) => m.default))
-    const html = render(
+    const html = await render(
       UnderReview({
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
@@ -54,12 +65,11 @@ export async function sendUnderReview(registration: IRegistration, event: IEvent
 export async function sendApproved(registration: IRegistration, event: IEvent) {
   try {
     const Approved = (await import('./templates/Approved').then((m) => m.default))
-    const html = render(
+    const html = await render(
       Approved({
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
         eventDateTime: new Date(event.dateTime).toLocaleString(),
-        eventLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/e/${event.slug}`,
       })
     )
     await sendEmail(registration.attendeeEmail, `You are approved for ${event.title}`, html)
@@ -71,7 +81,7 @@ export async function sendApproved(registration: IRegistration, event: IEvent) {
 export async function sendRejected(registration: IRegistration, event: IEvent) {
   try {
     const Rejected = (await import('./templates/Rejected').then((m) => m.default))
-    const html = render(
+    const html = await render(
       Rejected({
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
@@ -86,7 +96,7 @@ export async function sendRejected(registration: IRegistration, event: IEvent) {
 export async function sendRevoked(registration: IRegistration, event: IEvent) {
   try {
     const Revoked = (await import('./templates/Revoked').then((m) => m.default))
-    const html = render(
+    const html = await render(
       Revoked({
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
@@ -104,11 +114,10 @@ export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
     const Registration = (await import('@/models/Registration').then((m) => m.default))
     const registrations = await Registration.find({
       eventId: event._id,
-      status: { $in: ['registered', 'approved'] },
+      status: 'confirmed',
     })
 
-    const EventUpdated = (await import('./templates/EventUpdated').then((m) => m.default))
-    const html = render(
+    const html = await render(
       EventUpdated({
         eventTitle: event.title,
         changedFields,
@@ -132,11 +141,10 @@ export async function sendEventCancelled(event: IEvent) {
     const Registration = (await import('@/models/Registration').then((m) => m.default))
     const registrations = await Registration.find({
       eventId: event._id,
-      status: { $in: ['registered', 'approved'] },
+      status: 'confirmed',
     })
 
-    const EventCancelled = (await import('./templates/EventCancelled').then((m) => m.default))
-    const html = render(
+    const html = await render(
       EventCancelled({
         eventTitle: event.title,
       })
@@ -150,5 +158,23 @@ export async function sendEventCancelled(event: IEvent) {
     )
   } catch (error) {
     console.error('Failed to send event cancelled email:', error)
+  }
+}
+
+export async function sendEventReminder(registration: IRegistration, event: IEvent) {
+  try {
+    const EventReminder = (await import('./templates/EventReminder').then((m) => m.default))
+    const html = await render(
+      EventReminder({
+        attendeeName: registration.attendeeName,
+        eventTitle: event.title,
+        eventDateTime: new Date(event.dateTime).toLocaleString(),
+        venueOrJoinUrl: event.isOnline ? (event.zoomJoinUrl || 'Zoom link pending') : (event.venue || 'TBA'),
+        isOnline: event.isOnline
+      })
+    )
+    await sendEmail(registration.attendeeEmail, `Reminder: ${event.title} is starting in 24 hours!`, html)
+  } catch (error) {
+    console.error('Failed to send event reminder email:', error)
   }
 }

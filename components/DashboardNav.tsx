@@ -7,7 +7,7 @@ import { FiHome, FiSettings, FiGrid, FiPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 const navItems = [
-  { href: "/dashboard", label: "Overview", Icon: FiGrid },
+  { href: "/dashboard", label: "Dashboard", Icon: FiGrid },
   { href: "/dashboard/settings", label: "Settings", Icon: FiSettings },
 ];
 

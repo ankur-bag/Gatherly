@@ -34,7 +34,7 @@ export function PublicEventShell({ children }: PublicEventShellProps) {
          <div className="absolute top-0 left-0 w-full h-96 bg-linear-to-b from-orange/5 to-transparent" />
       </div>
 
-      <div className="pt-32 pb-20">
+      <div className="pt-24 pb-20">
         {children}
       </div>
     </main>

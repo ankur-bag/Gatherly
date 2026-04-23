@@ -32,6 +32,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState(false)
   const [error, setError] = useState('')
+  const [registrationStatus, setRegistrationStatus] = useState<string | undefined>()
 
   useEffect(() => {
     async function fetchEvent() {
@@ -98,6 +99,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
       }
 
       const registrationStatus = body.data?.status || 'registered'
+      setRegistrationStatus(registrationStatus)
       setFeedback({ kind: 'success', message: getSuccessMessage(registrationStatus) })
       setRegistered(true)
       setFormData({ attendeeName: '', attendeeEmail: '' })
@@ -145,6 +147,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
         <PublicRegistrationSection
           publicStatus={publicStatus}
           registered={registered}
+          registrationStatus={registrationStatus}
           registering={registering}
           formData={formData}
           feedback={feedback}

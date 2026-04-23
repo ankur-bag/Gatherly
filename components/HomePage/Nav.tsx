@@ -28,11 +28,7 @@ export function Nav({ isSignedIn }: NavProps) {
     setIsVisible(true);
   });
 
-  const navLinks = [
-    { name: "Features", href: "#features" },
-    { name: "Workflows", href: "#workflows" },
-    { name: "Pricing", href: "#pricing" },
-  ];
+  const navLinks: any[] = [];
 
   return (
     <>
@@ -45,19 +41,19 @@ export function Nav({ isSignedIn }: NavProps) {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="fixed top-0 inset-x-0 z-[100] pointer-events-none"
       >
-        <div className="mx-auto max-w-7xl px-6 py-6 transition-all duration-500">
+        <div className="mx-auto max-w-4xl px-6 py-8 transition-all duration-500">
           <motion.div 
             animate={{
               backgroundColor: scrolled ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0)",
               backdropFilter: scrolled ? "blur(16px)" : "blur(0px)",
               borderColor: scrolled ? "rgba(18, 18, 17, 0.05)" : "rgba(18, 18, 17, 0)",
-              paddingLeft: scrolled ? "24px" : "0px",
-              paddingRight: scrolled ? "24px" : "0px",
+              paddingLeft: scrolled ? "32px" : "0px",
+              paddingRight: scrolled ? "32px" : "0px",
               boxShadow: scrolled ? "0 10px 30px rgba(0,0,0,0.05)" : "0 0 0 rgba(0,0,0,0)",
               scale: scrolled ? 0.98 : 1,
             }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex items-center justify-between rounded-full border py-3 pointer-events-auto"
+            className="relative flex items-center justify-between rounded-full border py-5 pointer-events-auto"
           >
             {/* Logo */}
             <Link

@@ -1,12 +1,6 @@
-import {
-  Html,
-  Body,
-  Head,
-  Heading,
-  Text,
-  Container,
-  Preview,
-} from 'react-email'
+import * as React from 'react'
+import BaseLayout from './BaseLayout'
+import { Text, Section } from '@react-email/components'
 
 interface RejectedProps {
   attendeeName: string
@@ -18,23 +12,56 @@ export default function Rejected({
   eventTitle,
 }: RejectedProps) {
   return (
-    <Html>
-      <Head />
-      <Preview>Update on your {eventTitle} application</Preview>
-      <Body style={{ fontFamily: 'sans-serif', backgroundColor: '#f9fafb' }}>
-        <Container style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '8px', marginTop: '20px' }}>
-          <Heading style={{ color: '#dc2626', marginBottom: '16px' }}>Application Decision</Heading>
-          <Text style={{ color: '#374151', marginBottom: '12px' }}>
-            Hi {attendeeName},
-          </Text>
-          <Text style={{ color: '#374151', marginBottom: '12px' }}>
-            Thank you for applying to <strong>{eventTitle}</strong>.
-          </Text>
-          <Text style={{ color: '#374151', marginBottom: '12px' }}>
-            Unfortunately, we are unable to accept your application at this time. We appreciate your interest and hope to see you at future events.
-          </Text>
-        </Container>
-      </Body>
-    </Html>
+    <BaseLayout 
+      previewText={`Update regarding your registration for ${eventTitle}`}
+      title="Registration Update"
+    >
+      <Text style={text}>
+        Hi {attendeeName},
+      </Text>
+      <Text style={text}>
+        Thank you for your interest in <strong>{eventTitle}</strong>. Unfortunately, we are unable to accept your registration at this time.
+      </Text>
+      
+      <Section style={infoCard}>
+        <Text style={infoLabel}>Event</Text>
+        <Text style={infoValue}>{eventTitle}</Text>
+        <Text style={infoLabel}>Status</Text>
+        <Text style={{ ...infoValue, color: '#D32F2F' }}>Declined</Text>
+      </Section>
+
+      <Text style={text}>
+        We appreciate your interest and hope to see you at future events.
+      </Text>
+    </BaseLayout>
   )
+}
+
+const text = {
+  fontSize: '16px',
+  lineHeight: '26px',
+  color: '#484848',
+}
+
+const infoCard = {
+  backgroundColor: '#F8F8F7',
+  padding: '24px',
+  borderRadius: '16px',
+  margin: '24px 0',
+}
+
+const infoLabel = {
+  fontSize: '10px',
+  fontWeight: 'bold',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.1em',
+  color: '#8A8A8A',
+  margin: '0 0 4px',
+}
+
+const infoValue = {
+  fontSize: '18px',
+  fontWeight: 'bold',
+  color: '#1A1A1A',
+  margin: '0 0 16px',
 }

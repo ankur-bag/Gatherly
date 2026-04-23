@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FiArrowRight } from "react-icons/fi";
 import { SignUpButton } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
 interface VerticalMarqueeProps {
   children: ReactNode;
@@ -147,7 +148,7 @@ export default function CTAWithVerticalMarquee() {
               className="flex flex-col sm:flex-row gap-6 w-full"
             >
               <SignUpButton mode="modal">
-                <button className="h-16 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-3 transition-all hover:bg-orange hover:shadow-[0_20px_50px_rgba(255,127,17,0.3)] hover:-translate-y-1 active:scale-95 cursor-pointer">
+                <button onClick={() => redirect("/dashboard") }className="h-16 px-10 rounded-2xl bg-charcoal text-white font-bold inline-flex items-center gap-3 transition-all hover:bg-orange hover:shadow-[0_20px_50px_rgba(255,127,17,0.3)] hover:-translate-y-1 active:scale-95 cursor-pointer">
                   START LAUNCHING
                   <FiArrowRight size={22} />
                 </button>

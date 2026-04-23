@@ -7,6 +7,7 @@ import {
   sendRevoked,
   sendEventUpdated,
   sendEventCancelled,
+  sendEventReminder,
 } from './service'
 
 export function registerEmailExtension() {
@@ -19,7 +20,7 @@ export function registerEmailExtension() {
     }
   })
 
-  onHook('registration.approved', async ({ registration, event }) => {
+  onHook('registration.confirmed', async ({ registration, event }) => {
     await sendApproved(registration, event)
   })
 
@@ -40,5 +41,27 @@ export function registerEmailExtension() {
 
   onHook('event.cancelled', async ({ event }) => {
     await sendEventCancelled(event)
+  })
+
+  // Reminder hook
+  onHook('event.reminder', async ({ eventId }) => {
+    try {
+      const Event = (await import('@/models/Event').then((m) => m.default))
+      const Registration = (await import('@/models/Registration').then((m) => m.default))
+      
+      const event = await Event.findById(eventId)
+      if (!event) return
+
+      const attendees = await Registration.find({
+        eventId,
+        status: 'confirmed'
+      })
+
+      await Promise.allSettled(
+        attendees.map(reg => sendEventReminder(reg, event))
+      )
+    } catch (error) {
+      console.error('Failed to handle event.reminder hook:', error)
+    }
   })
 }
