@@ -2,13 +2,7 @@
 
 import CTAWithVerticalMarquee from "@/components/ui/cta-with-text-marquee";
 
-interface CtaProps {
-  isSignedIn: boolean;
-}
-
-export function Cta({ isSignedIn }: CtaProps) {
-  if (isSignedIn) return null;
-
+export function Cta() {
   return (
     <section id="cta">
       <CTAWithVerticalMarquee />

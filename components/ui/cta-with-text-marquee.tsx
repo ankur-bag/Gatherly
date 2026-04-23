@@ -152,9 +152,6 @@ export default function CTAWithVerticalMarquee() {
                   <FiArrowRight size={22} />
                 </button>
               </SignUpButton>
-              <button className="h-16 px-10 rounded-2xl glass font-bold text-charcoal hover:bg-black/5 transition-all active:scale-95">
-                BOOK A DEMO
-              </button>
             </motion.div>
           </div>
 

@@ -18,7 +18,7 @@ export function HomePageUI() {
       <main className="w-full">
         <Hero isSignedIn={signedIn} />
         <VercepFeature1 />
-        <Cta isSignedIn={signedIn} />
+        <Cta />
       </main>
       <Footer />
     </div>
