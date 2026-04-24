@@ -172,7 +172,7 @@ export function EventTemplateSelector() {
 
         {/* Footer Info */}
         <div className="text-center text-sm text-charcoal/50 font-medium">
-          You can edit all fields after creating your event
+          You can edit all fields while creating your event
         </div>
       </div>
     </div>
