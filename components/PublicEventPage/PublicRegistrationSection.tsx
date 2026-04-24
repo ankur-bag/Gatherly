@@ -148,7 +148,7 @@ export function PublicRegistrationSection({
         <button
           type="submit"
           disabled={registering}
-          className="mt-2 w-full rounded-lg bg-[#FF7F11] px-6 py-3.5 font-semibold text-white transition-all hover:bg-[#e67210] hover:shadow-md disabled:opacity-50"
+          className="mt-2 w-full rounded-lg cursor-pointer bg-[#FF7F11] px-6 py-3.5 font-semibold text-white transition-all hover:bg-[#e67210] hover:shadow-md disabled:opacity-50"
         >
           {registering ? "Submitting registration..." : "Register now"}
         </button>

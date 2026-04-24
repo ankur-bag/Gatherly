@@ -39,6 +39,7 @@ export async function sendRegistrationConfirmed(registration: IRegistration, eve
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
         eventDateTime: new Date(event.dateTime).toLocaleString(),
+        zoomJoinUrl: event.isOnline ? (event.zoomJoinUrl ?? undefined) : undefined,
       })
     )
     await sendEmail(registration.attendeeEmail, `You are registered for ${event.title}`, html)
@@ -138,11 +139,10 @@ export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
 
 export async function sendEventCancelled(event: IEvent) {
   try {
-    // Get all registered attendees
+    // Get all registrations for the event, regardless of status
     const Registration = (await import('@/models/Registration').then((m) => m.default))
     const registrations = await Registration.find({
       eventId: event._id,
-      status: 'confirmed',
     })
 
     const html = await render(

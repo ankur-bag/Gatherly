@@ -46,7 +46,7 @@ export function PublicEventDetails({ event, attendeeCount }: PublicEventDetailsP
             <FiVideo className="text-orange" size={16} />
             Online event
           </div>
-          <p className="mt-1 text-[#737370]">Meeting link is shared only after your registration is approved.</p>
+          <p className="mt-1 text-[#737370]">Meeting link will be shared via mail only after your registration is approved.</p>
         </article>
       ) : (
         <article className="rounded-xl border border-[#e5e5df] bg-white p-6 shadow-sm md:col-span-2">

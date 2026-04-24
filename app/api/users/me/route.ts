@@ -11,9 +11,13 @@ export async function POST() {
     }
 
     await dbConnect()
+    const existingUser = await User.findOne({ clerkId: userId })
     const clerkUser = await currentUser()
 
     if (!clerkUser) {
+      if (existingUser) {
+        return NextResponse.json({ data: existingUser.toObject() })
+      }
       return NextResponse.json({ error: 'Clerk user not found' }, { status: 404 })
     }
 
@@ -29,6 +33,16 @@ export async function POST() {
 
     return NextResponse.json({ data: user.toObject() })
   } catch (error: any) {
+    if (error?.message?.includes('fetch failed')) {
+      const { userId } = await auth()
+      if (userId) {
+        await dbConnect()
+        const existingUser = await User.findOne({ clerkId: userId })
+        if (existingUser) {
+          return NextResponse.json({ data: existingUser.toObject() })
+        }
+      }
+    }
     console.error('POST /api/users/me error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { FiArrowLeft } from 'react-icons/fi'
 
 interface PublicEventShellProps {
@@ -9,7 +10,7 @@ export function PublicEventShell({ children }: PublicEventShellProps) {
   return (
     <main className="min-h-screen bg-cream">
       {/* Public Nav - Minimal version of floating nav */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-5xl glass rounded-pill px-6 py-3 shadow-framer">
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-100 w-[95%] max-w-5xl glass rounded-pill px-6 py-3 shadow-framer">
         <nav className="flex items-center justify-between">
           <Link
             href="/"
@@ -19,8 +20,8 @@ export function PublicEventShell({ children }: PublicEventShellProps) {
             Home
           </Link>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal">
-              <span className="text-[10px] font-bold text-white">A</span>
+            <div className="flex h-7 w-7 items-center justify-center">
+              <Image src="/avento.svg" alt="Avento Logo" width={28} height={28} className="object-contain" />
             </div>
             <span className="text-lg font-medium tracking-tight text-charcoal" style={{ fontFamily: 'var(--font-display)' }}>
               Avento

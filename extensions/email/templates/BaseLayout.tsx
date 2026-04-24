@@ -4,7 +4,6 @@ import {
   Head,
   Heading,
   Text,
-  Link,
   Container,
   Preview,
   Section,
@@ -22,6 +21,8 @@ interface BaseLayoutProps {
   footerText?: string
 }
 
+const BASE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
+
 export default function BaseLayout({
   previewText,
   title,
@@ -35,7 +36,11 @@ export default function BaseLayout({
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Text style={logo}>AVENTO</Text>
+            <Row style={logoRow}>
+              <Column style={logoColumn}>
+                <Img src={`${BASE_URL}/avento-mail.jpg`} alt="Avento logo" width={140} height={48} style={logoImage} />
+              </Column>
+            </Row>
           </Section>
           
           <Section style={contentBox}>
@@ -72,6 +77,20 @@ const container = {
 const header = {
   padding: '30px 0',
   textAlign: 'center' as const,
+}
+
+const logoRow = {
+  margin: '0 auto',
+  width: 'fit-content',
+}
+
+const logoColumn = {
+  textAlign: 'center' as const,
+}
+
+const logoImage = {
+  display: 'block',
+  margin: '0 auto',
 }
 
 const logo = {

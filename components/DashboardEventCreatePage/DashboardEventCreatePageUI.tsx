@@ -5,7 +5,7 @@ import { EVENT_TEMPLATES } from '@/lib/utils'
 import { RegistrationMode } from '@/types'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
-import { FiSave, FiMapPin, FiArrowLeft, FiInfo } from 'react-icons/fi'
+import { FiSave, FiMapPin, FiArrowLeft, FiInfo, FiCpu, FiCheck, FiX, FiRefreshCw } from 'react-icons/fi'
 import Link from 'next/link'
 
 interface EventFormState {
@@ -55,12 +55,63 @@ export function DashboardEventCreatePageUI() {
   const [form, setForm] = useState<EventFormState>(getInitialForm)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [improvingDescription, setImprovingDescription] = useState(false)
+  const [improveError, setImproveError] = useState('')
+  const [pendingOriginalDescription, setPendingOriginalDescription] = useState<string | null>(null)
 
   const updateForm = <K extends keyof EventFormState>(
     field: K,
     value: EventFormState[K]
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleImproveDescription = async () => {
+    const currentDescription = form.description.trim()
+    if (!currentDescription || improvingDescription) {
+      return
+    }
+
+    setImprovingDescription(true)
+    setImproveError('')
+
+    try {
+      const res = await fetch('/api/ai/improve-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: currentDescription }),
+      })
+
+      const json = await res.json()
+      if (!res.ok) {
+        setImproveError(json.error || 'Failed to improve description')
+        return
+      }
+
+      const revisedDescription = json?.data?.revisedDescription
+      if (!revisedDescription || typeof revisedDescription !== 'string') {
+        setImproveError('AI could not revise this description')
+        return
+      }
+
+      setPendingOriginalDescription(form.description)
+      updateForm('description', revisedDescription)
+    } catch (err) {
+      setImproveError(err instanceof Error ? err.message : 'Failed to improve description')
+    } finally {
+      setImprovingDescription(false)
+    }
+  }
+
+  const handleAcceptImprovedDescription = () => {
+    setPendingOriginalDescription(null)
+  }
+
+  const handleRejectImprovedDescription = () => {
+    if (pendingOriginalDescription !== null) {
+      updateForm('description', pendingOriginalDescription)
+    }
+    setPendingOriginalDescription(null)
   }
 
   const handleSubmit = async (e: React.FormEvent, status: 'draft' | 'published' = 'draft') => {
@@ -127,7 +178,7 @@ export function DashboardEventCreatePageUI() {
           {/* Error Alert */}
           {error && (
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center gap-3">
-              <FiInfo size={18} className="flex-shrink-0" />
+              <FiInfo size={18} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -154,14 +205,63 @@ export function DashboardEventCreatePageUI() {
               <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5">
                 Description
               </label>
-              <textarea
-                value={form.description}
-                onChange={(e) => updateForm('description', e.target.value)}
-                required
-                placeholder="What is your event about? Give attendees the context..."
-                rows={3}
-                className="w-full rounded-lg bg-white border border-charcoal/8 px-4 py-3 font-medium text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all resize-none"
-              />
+              <div className="relative">
+                <textarea
+                  value={form.description}
+                  onChange={(e) => updateForm('description', e.target.value)}
+                  required
+                  placeholder="What is your event about? Give attendees the context..."
+                  rows={3}
+                  className="w-full rounded-lg bg-white border border-charcoal/8 px-4 py-3 pr-12 font-medium text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all resize-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleImproveDescription}
+                  disabled={!form.description.trim() || improvingDescription}
+                  className="absolute bottom-2 right-2 h-8 w-8 rounded-full border border-charcoal/10 bg-white text-orange flex items-center justify-center cursor-pointer hover:bg-orange hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={improvingDescription ? 'Enhancing description...' : 'Improve with AI'}
+                >
+                  {improvingDescription ? (
+                    <FiRefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <FiCpu size={14} />
+                  )}
+                </button>
+              </div>
+
+              <p className="mt-2 text-xs font-medium text-charcoal/60">
+                {improvingDescription
+                  ? 'Enhancing description...'
+                  : pendingOriginalDescription !== null
+                    ? 'Enhanced description ready. Accept or reject.'
+                    : 'Click the AI icon to enhance your description.'}
+              </p>
+
+              {improveError && (
+                <p className="mt-2 text-xs font-medium text-red-600">{improveError}</p>
+              )}
+
+              {pendingOriginalDescription !== null && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-orange/20 bg-orange/5 p-3">
+                  <p className="text-xs font-semibold text-charcoal/70 mr-2">Use AI revised description?</p>
+                  <button
+                    type="button"
+                    onClick={handleAcceptImprovedDescription}
+                    className="h-8 px-3 rounded-lg bg-charcoal text-white text-xs font-bold flex items-center gap-1.5 hover:bg-orange transition-all"
+                  >
+                    <FiCheck size={12} />
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRejectImprovedDescription}
+                    className="h-8 px-3 rounded-lg border border-charcoal/15 bg-white text-charcoal text-xs font-bold flex items-center gap-1.5 hover:bg-charcoal/5 transition-all"
+                  >
+                    <FiX size={12} />
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -191,10 +291,10 @@ export function DashboardEventCreatePageUI() {
                   <button
                     type="button"
                     onClick={() => updateForm('isOnline', false)}
-                    className={`flex-1 rounded-lg font-bold text-sm transition-all ${
+                    className={`flex-1 cursor-pointer rounded-lg font-bold text-sm transition-all ${
                       !form.isOnline
                         ? 'bg-charcoal text-white shadow-sm'
-                        : 'bg-white border border-charcoal/8 text-charcoal hover:bg-charcoal/2'
+                        : 'bg-white border cursor-pointer border-charcoal/8 text-charcoal hover:bg-charcoal/2'
                     }`}
                   >
                     In-Person
@@ -202,7 +302,7 @@ export function DashboardEventCreatePageUI() {
                   <button
                     type="button"
                     onClick={() => updateForm('isOnline', true)}
-                    className={`flex-1 rounded-lg font-bold text-sm transition-all ${
+                    className={`flex-1 cursor-pointer rounded-lg font-bold text-sm transition-all ${
                       form.isOnline
                         ? 'bg-charcoal text-white shadow-sm'
                         : 'bg-white border border-charcoal/8 text-charcoal hover:bg-charcoal/2'
@@ -217,7 +317,7 @@ export function DashboardEventCreatePageUI() {
             {/* Venue (in-person) or Auto-Zoom info (online) */}
             {form.isOnline ? (
               <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
-                <span className="mt-0.5 flex-shrink-0 text-blue-400">
+                <span className="mt-0.5 shrink-0 text-blue-400">
                   <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </span>
                 <p className="text-sm font-medium text-blue-700">
@@ -226,7 +326,7 @@ export function DashboardEventCreatePageUI() {
               </div>
             ) : (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
                   <FiMapPin size={12} />
                   Venue
                 </label>
@@ -300,7 +400,7 @@ export function DashboardEventCreatePageUI() {
                 }
               }}
               disabled={loading}
-              className="flex-1 h-14 bg-white border border-charcoal/10 text-charcoal rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-charcoal/2 transition-all disabled:opacity-50"
+              className="flex-1 h-14 cursor-pointer bg-white border border-charcoal/10 text-charcoal rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-charcoal/2 transition-all disabled:opacity-50"
             >
               {loading ? 'Saving...' : (
                 <>
@@ -320,7 +420,7 @@ export function DashboardEventCreatePageUI() {
                 }
               }}
               disabled={loading}
-              className="flex-[1.5] h-14 bg-charcoal text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-orange transition-all disabled:opacity-50 group"
+              className="flex-[1.5] h-14 bg-charcoal cursor-pointer text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-orange transition-all disabled:opacity-50 group"
             >
               {loading ? 'Launching...' : (
                 <>
