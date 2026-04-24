@@ -158,7 +158,7 @@ export async function updateStatus(userId: string, registrationId: string, newSt
   // Fire appropriate hook based on new status
   const hookMap: Record<RegistrationStatus, string> = {
     pending: '', 
-    confirmed: 'registration.confirmed',
+    confirmed: 'registration.approved',
     rejected: 'registration.rejected',
     revoked: 'registration.revoked',
   }

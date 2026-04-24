@@ -9,7 +9,6 @@ import {
   Section,
   Row,
   Column,
-  Img,
   Hr,
 } from '@react-email/components'
 import * as React from 'react'
@@ -38,7 +37,7 @@ export default function BaseLayout({
           <Section style={header}>
             <Row style={logoRow}>
               <Column style={logoColumn}>
-                <Img src={`${BASE_URL}/avento-mail.jpg`} alt="Avento logo" width={140} height={48} style={logoImage} />
+                <Text style={logoText}>AVENTO</Text>
               </Column>
             </Row>
           </Section>
@@ -91,6 +90,15 @@ const logoColumn = {
 const logoImage = {
   display: 'block',
   margin: '0 auto',
+}
+
+const logoText = {
+  fontSize: '24px',
+  fontWeight: 'bold',
+  color: '#1A1A1A',
+  letterSpacing: '0.2em',
+  margin: '0',
+  textAlign: 'center' as const,
 }
 
 const logo = {
