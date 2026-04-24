@@ -36,6 +36,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (error.message === 'Event is full') {
       return NextResponse.json({ error: 'Event is full' }, { status: 409 })
     }
+    if (error.message === 'Event is cancelled') {
+      return NextResponse.json({ error: 'Event is cancelled' }, { status: 409 })
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

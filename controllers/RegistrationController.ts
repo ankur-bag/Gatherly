@@ -121,6 +121,10 @@ export async function updateStatus(userId: string, registrationId: string, newSt
     throw new Error('Not found')
   }
 
+  if (event.status === 'cancelled') {
+    throw new Error('Event is cancelled')
+  }
+
   // Ownership check
   if (event.organizerClerkId !== userId) {
     throw new Error('Forbidden')

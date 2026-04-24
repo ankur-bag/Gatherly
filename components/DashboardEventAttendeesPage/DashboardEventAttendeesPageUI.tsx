@@ -47,6 +47,11 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
   }, [eventId, isLoaded])
 
   async function updateStatus(regId: string, status: string) {
+    if (event?.status === 'cancelled') {
+      showToast('Actions are disabled for cancelled events', 'error')
+      return
+    }
+
     try {
       const res = await fetch(`/api/registrations/${regId}/status`, {
         method: 'PATCH',
@@ -62,6 +67,8 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
   }
 
   const handleSelectAll = () => {
+    if (event?.status === 'cancelled') return
+
     if (selectedIds.length > 0) {
       setSelectedIds([])
     } else {
@@ -70,10 +77,16 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
   }
 
   const toggleSelection = (id: string) => {
+    if (event?.status === 'cancelled') return
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
 
   async function handleBulkAction(action: 'approve' | 'reject') {
+    if (event?.status === 'cancelled') {
+      showToast('Actions are disabled for cancelled events', 'error')
+      return
+    }
+
     setBulkActionLoading(true)
     try {
       const res = await fetch('/api/registrations/bulk-update', {
@@ -100,6 +113,8 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
     const matchesFilter = filter === 'all' || reg.status === filter
     return matchesSearch && matchesFilter
   })
+
+  const actionsDisabled = event?.status === 'cancelled'
 
   // Group stats
   const stats = registrations.reduce(
@@ -192,14 +207,14 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
                 </span>
                 <button
                   onClick={() => setBulkActionConfirm('approve')}
-                  disabled={bulkActionLoading}
+                  disabled={bulkActionLoading || actionsDisabled}
                   className="h-10 px-4 rounded-xl bg-green-50 text-green-600 text-[13px] font-bold border border-green-100 hover:bg-green-600 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
                   <FiCheck size={14} /> Approve All
                 </button>
                 <button
                   onClick={() => setBulkActionConfirm('reject')}
-                  disabled={bulkActionLoading}
+                  disabled={bulkActionLoading || actionsDisabled}
                   className="h-10 px-4 rounded-xl bg-red-50 text-red-500 text-[13px] font-bold border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
                   <FiX size={14} /> Reject All
@@ -209,6 +224,7 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
             
             <button
               onClick={handleSelectAll}
+              disabled={actionsDisabled}
               className={`h-10 px-4 rounded-xl text-[13px] font-bold transition-all cursor-pointer border ${selectedIds.length > 0 ? 'bg-orange text-white border-orange shadow-md shadow-orange/20' : 'bg-charcoal/5 text-charcoal hover:bg-charcoal/10 border-transparent'}`}
             >
               {selectedIds.length > 0 ? 'Deselect All' : 'Select All'}
@@ -274,6 +290,7 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
                             type="checkbox" 
                             checked={selectedIds.includes(reg._id?.toString() || '')}
                             onChange={() => toggleSelection(reg._id?.toString() || '')}
+                            disabled={actionsDisabled}
                             className="cursor-pointer accent-orange w-4 h-4 rounded"
                           />
                         </td>
@@ -303,13 +320,15 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
                             <>
                               <button
                                 onClick={() => updateStatus(reg._id?.toString() || '', 'confirmed')}
-                                className="h-9 px-4 rounded-xl bg-green-50 text-green-600 text-xs font-bold border border-green-100 hover:bg-green-600 hover:text-white transition-all cursor-pointer flex items-center gap-2"
+                                disabled={actionsDisabled}
+                                className="h-9 px-4 rounded-xl bg-green-50 text-green-600 text-xs font-bold border border-green-100 hover:bg-green-600 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                               >
                                 <FiCheck size={14} /> Confirm
                               </button>
                               <button
                                 onClick={() => updateStatus(reg._id?.toString() || '', 'rejected')}
-                                className="h-9 px-4 rounded-xl bg-red-50 text-red-500 text-xs font-bold border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center gap-2"
+                                disabled={actionsDisabled}
+                                className="h-9 px-4 rounded-xl bg-red-50 text-red-500 text-xs font-bold border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                               >
                                 <FiX size={14} /> Reject
                               </button>
@@ -318,7 +337,8 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
                           {reg.status === 'confirmed' && (
                             <button
                               onClick={() => updateStatus(reg._id?.toString() || '', 'revoked')}
-                              className="h-9 px-4 rounded-xl bg-charcoal/5 border border-black/5 text-charcoal/40 text-xs font-bold hover:bg-charcoal hover:text-white transition-all cursor-pointer"
+                              disabled={actionsDisabled}
+                              className="h-9 px-4 rounded-xl bg-charcoal/5 border border-black/5 text-charcoal/40 text-xs font-bold hover:bg-charcoal hover:text-white transition-all cursor-pointer disabled:opacity-50"
                             >
                               Revoke
                             </button>
@@ -326,7 +346,8 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
                           {(reg.status === 'rejected' || reg.status === 'revoked') && (
                             <button
                               onClick={() => updateStatus(reg._id?.toString() || '', 'confirmed')}
-                              className="h-9 px-4 rounded-xl bg-green-50 text-green-600 text-xs font-bold border border-green-100 hover:bg-green-600 hover:text-white transition-all cursor-pointer flex items-center gap-2"
+                              disabled={actionsDisabled}
+                              className="h-9 px-4 rounded-xl bg-green-50 text-green-600 text-xs font-bold border border-green-100 hover:bg-green-600 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                             >
                               <FiCheck size={14} /> Confirm
                             </button>
