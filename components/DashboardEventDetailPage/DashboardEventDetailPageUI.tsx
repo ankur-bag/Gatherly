@@ -7,8 +7,9 @@ import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { useToast } from '@/components/ui/Toast'
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCalendar, FiClock, FiLink, FiMapPin, FiUsers, FiGlobe, FiRefreshCw } from 'react-icons/fi'
+import { FiArrowLeft, FiCalendar, FiClock, FiLink, FiMapPin, FiUsers, FiGlobe, FiRefreshCw, FiCopy } from 'react-icons/fi'
 
 interface IEventExtended extends IEvent {
   registrationsCount?: number
@@ -17,6 +18,7 @@ interface IEventExtended extends IEvent {
 export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
   const router = useRouter()
   const { isLoaded } = useAuth()
+  const { showToast } = useToast()
   const [event, setEvent] = useState<IEventExtended | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionConfirm, setActionConfirm] = useState<'publish' | 'cancel' | null>(null)
@@ -73,13 +75,27 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
     setError('')
     try {
       const res = await fetch(`/api/events/${eventId}/zoom/retry`, { method: 'POST' })
-      if (!res.ok) throw new Error('Retry failed')
-      const { data } = await res.json()
+      const body = await res.json()
+      if (!res.ok) {
+        throw new Error(body.error || 'Retry failed')
+      }
+      const { data } = body
       setEvent(data)
-    } catch {
-      setError('Failed to retry Zoom sync')
+    } catch (retryError) {
+      const message = retryError instanceof Error ? retryError.message : 'Failed to retry Zoom sync'
+      setError(message)
     } finally {
       setRetryLoading(false)
+    }
+  }
+
+  async function handleCopyZoomLink() {
+    if (!event?.zoomJoinUrl) return
+    try {
+      await navigator.clipboard.writeText(event.zoomJoinUrl)
+      showToast('Zoom link copied to clipboard', 'success')
+    } catch {
+      showToast('Failed to copy Zoom link', 'error')
     }
   }
 
@@ -182,6 +198,12 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
           </div>
         </div>
 
+        {event.isOnline && event.zoomSyncStatus === 'failed' && event.zoomError && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            Zoom error: {event.zoomError}
+          </div>
+        )}
+
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
            <div className="bento-card">
@@ -245,20 +267,31 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
              </Link>
 
              {event.isOnline && event.zoomJoinUrl && (
-                <a 
+               <div className="bento-card group flex flex-col justify-between hover:bg-blue-50">
+                 <a
                    href={event.zoomJoinUrl}
                    target="_blank"
                    rel="noreferrer"
-                   className="bento-card group flex flex-col justify-between hover:bg-blue-50"
-                >
+                   className="block"
+                 >
                    <div className="mb-10 h-14 w-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center transition-all group-hover:scale-110">
-                      <FiLink size={28} />
+                     <FiLink size={28} />
                    </div>
                    <div>
-                      <h3 className="text-2xl font-medium mb-2 group-hover:text-blue-500 transition-colors">Start Meeting</h3>
-                      <p className="text-charcoal/40 font-medium">Connect to your synced Zoom session and begin hosting.</p>
+                     <h3 className="text-2xl font-medium mb-2 group-hover:text-blue-500 transition-colors">Start Meeting</h3>
+                     <p className="text-charcoal/40 font-medium">Connect to your synced Zoom session and begin hosting.</p>
                    </div>
-                </a>
+                 </a>
+                 <div className="mt-5 flex items-center justify-end">
+                   <button
+                    onClick={handleCopyZoomLink}
+                    className="h-10 px-4 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold flex items-center gap-2 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
+                   >
+                    <FiCopy size={14} />
+                    Copy Zoom Link
+                   </button>
+                 </div>
+               </div>
              )}
           </div>
         )}

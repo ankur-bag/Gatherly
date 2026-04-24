@@ -35,10 +35,21 @@ export async function POST(req: Request) {
     const body = await req.json()
     
     if (body.action === 'connect') {
+      const zoomAccountId = process.env.ZOOM_ACCOUNT_ID || ''
+      const zoomClientId = process.env.ZOOM_CLIENT_ID || ''
+      const zoomClientSecret = process.env.ZOOM_CLIENT_SECRET || ''
+
+      if (!zoomAccountId || !zoomClientId || !zoomClientSecret) {
+        return NextResponse.json(
+          { error: 'Zoom environment variables are missing. Please configure ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, and ZOOM_CLIENT_SECRET.' },
+          { status: 400 }
+        )
+      }
+
       await UserController.updateSettings(userId, {
-        zoomAccountId: process.env.ZOOM_ACCOUNT_ID || '',
-        zoomClientId: process.env.ZOOM_CLIENT_ID || '',
-        zoomClientSecret: process.env.ZOOM_CLIENT_SECRET || '',
+        zoomAccountId,
+        zoomClientId,
+        zoomClientSecret,
       })
       return NextResponse.json({ status: 'synced' })
     } else if (body.action === 'disconnect') {

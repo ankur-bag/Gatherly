@@ -36,6 +36,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     const body = await req.json()
+
+    if (body.action === 'publish') {
+      const result = await EventController.publish(userId, id)
+      return NextResponse.json({ data: result })
+    }
+
+    if (body.action === 'cancel') {
+      const result = await EventController.cancel(userId, id)
+      return NextResponse.json({ data: result })
+    }
+
     const result = await EventController.update(userId, id, body)
     return NextResponse.json({ data: result })
   } catch (error: any) {

@@ -1,12 +1,12 @@
 import { onHook } from '@/lib/hooks'
-import { createMeeting, updateMeeting, deleteMeeting } from './service'
+import { createMeeting, updateMeeting, deleteMeeting, endMeeting } from './service'
 import Event from '@/models/Event'
 
 export function registerZoomExtension() {
   // ───────────────────────────────────────────────────────────────────────────
   // event.published → create Zoom meeting
   // ───────────────────────────────────────────────────────────────────────────
-  onHook('event.published', async ({ event }) => {
+  onHook('event.published', async ({ event, organizer }) => {
     if (!event.isOnline) return
 
     // ✅ Idempotency guard: if meeting already exists, skip
@@ -16,7 +16,7 @@ export function registerZoomExtension() {
     }
 
     try {
-      const zoom = await createMeeting(event)
+      const zoom = await createMeeting(event, organizer)
 
       await Event.findByIdAndUpdate(event._id, {
         zoomMeetingId: zoom.id,
@@ -38,11 +38,11 @@ export function registerZoomExtension() {
   // ───────────────────────────────────────────────────────────────────────────
   // event.updated → patch Zoom meeting or delete if switched to in-person
   // ───────────────────────────────────────────────────────────────────────────
-  onHook('event.updated', async ({ event, changedFields }) => {
+  onHook('event.updated', async ({ event, organizer, changedFields }) => {
     // ✅ Edge case: switched from Online → In-Person, clean up Zoom meeting
     if (!event.isOnline && event.zoomMeetingId) {
       try {
-        await deleteMeeting(event.zoomMeetingId)
+        await deleteMeeting(event.zoomMeetingId, organizer)
         console.log(`[Zoom] Meeting deleted after type switch for event ${event._id}`)
       } catch (err: any) {
         console.error(`[Zoom] Failed to delete meeting on type-switch for event ${event._id}:`, err)
@@ -65,7 +65,7 @@ export function registerZoomExtension() {
     if (!shouldUpdate) return
 
     try {
-      await updateMeeting(event.zoomMeetingId, event)
+      await updateMeeting(event.zoomMeetingId, event, organizer)
       await Event.findByIdAndUpdate(event._id, {
         zoomSyncStatus: 'synced',
         zoomError: null,
@@ -83,21 +83,41 @@ export function registerZoomExtension() {
   // ───────────────────────────────────────────────────────────────────────────
   // event.cancelled → delete Zoom meeting
   // ───────────────────────────────────────────────────────────────────────────
-  onHook('event.cancelled', async ({ event }) => {
-    if (!event.zoomMeetingId) return
-
-    try {
-      await deleteMeeting(event.zoomMeetingId)
+  onHook('event.cancelled', async ({ event, organizer }) => {
+    if (!event.zoomMeetingId) {
       await Event.findByIdAndUpdate(event._id, {
         zoomSyncStatus: 'cancelled',
         zoomError: null,
+        $unset: {
+          zoomMeetingId: 1,
+          zoomJoinUrl: 1,
+        },
       })
+      return
+    }
+
+    const meetingId = event.zoomMeetingId
+    try {
+      try {
+        await endMeeting(meetingId, organizer)
+        console.log(`[Zoom] Meeting ended for event ${event._id}`)
+      } catch (endError: any) {
+        console.error(`[Zoom] Failed to end meeting for event ${event._id}:`, endError)
+      }
+
+      await deleteMeeting(meetingId, organizer)
       console.log(`[Zoom] Meeting deleted for event ${event._id}`)
     } catch (err: any) {
       console.error(`[Zoom] Failed to delete meeting for event ${event._id}:`, err)
+    } finally {
+      // Immediately invalidate stored join link and meeting reference after cancellation.
       await Event.findByIdAndUpdate(event._id, {
-        zoomSyncStatus: 'failed',
-        zoomError: err?.message || 'Unknown error',
+        zoomSyncStatus: 'cancelled',
+        zoomError: null,
+        $unset: {
+          zoomMeetingId: 1,
+          zoomJoinUrl: 1,
+        },
       })
     }
   })

@@ -41,11 +41,12 @@ export function DashboardSettingsPageUI() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'connect' }),
       })
-      if (!res.ok) throw new Error('Connect failed')
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Connect failed')
       setZoomStatus(data.status)
-    } catch {
-      setError('Failed to configure Zoom')
+    } catch (connectError) {
+      const message = connectError instanceof Error ? connectError.message : 'Failed to configure Zoom'
+      setError(message)
     } finally {
       setActionLoading(false)
     }
@@ -106,7 +107,7 @@ export function DashboardSettingsPageUI() {
           </div>
         )}
 
-        <div className="bento-card !p-0 overflow-hidden border-none shadow-framer">
+        <div className="bento-card p-0! overflow-hidden border-none shadow-framer">
           {/* Section Header */}
           <div className="bg-charcoal/5 px-8 py-6 border-b border-black/5">
             <div className="flex items-center gap-4">

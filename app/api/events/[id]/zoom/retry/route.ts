@@ -54,9 +54,16 @@ export async function POST(
       organizer: organizer.toObject(),
     })
 
-    // Return fresh event state
+    // Return fresh event state and surface hook failure explicitly
     const updated = await Event.findById(id)
-    return NextResponse.json({ data: updated?.toObject() })
+    const updatedEvent = updated?.toObject()
+
+    if (updatedEvent?.zoomSyncStatus === 'failed') {
+      const zoomError = updatedEvent.zoomError || 'Zoom sync failed'
+      return NextResponse.json({ data: updatedEvent, error: zoomError }, { status: 400 })
+    }
+
+    return NextResponse.json({ data: updatedEvent })
   } catch (error: any) {
     console.error('POST /api/events/[id]/zoom/retry error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
