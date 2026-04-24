@@ -1,6 +1,7 @@
 'use client'
 
 import DashboardLayout from '@/components/DashboardLayout'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { ZoomSyncStatus } from '@/types'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
@@ -13,6 +14,7 @@ export function DashboardSettingsPageUI() {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState('')
+  const [disconnectConfirm, setDisconnectConfirm] = useState(false)
 
   useEffect(() => {
     if (!isLoaded) return
@@ -50,7 +52,7 @@ export function DashboardSettingsPageUI() {
   }
 
   async function handleZoomDisconnect() {
-    if (!confirm('Are you sure you want to disconnect Zoom?')) return
+    setDisconnectConfirm(false)
     setActionLoading(true)
     setError('')
     try {
@@ -142,13 +144,24 @@ export function DashboardSettingsPageUI() {
 
               <div className="flex justify-start lg:justify-end">
                 {zoomStatus === 'synced' ? (
-                  <button
-                    onClick={handleZoomDisconnect}
-                    disabled={actionLoading}
-                    className="h-14 px-10 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {actionLoading ? 'Unlinking...' : 'Disconnect Zoom'}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setDisconnectConfirm(true)}
+                      disabled={actionLoading}
+                      className="h-14 px-10 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {actionLoading ? 'Disconnecting...' : 'Disconnect'}
+                    </button>
+                    <ConfirmModal
+                      isOpen={disconnectConfirm}
+                      title="Disconnect Zoom"
+                      message="Are you sure you want to disconnect Zoom? This will stop future automatic meeting creation."
+                      isDanger={true}
+                      confirmText="Disconnect"
+                      onCancel={() => setDisconnectConfirm(false)}
+                      onConfirm={handleZoomDisconnect}
+                    />
+                  </>
                 ) : (
                   <button
                     onClick={handleZoomConnect}

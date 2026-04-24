@@ -15,6 +15,7 @@ export interface CreateEventInput {
   capacity: number
   registrationMode: RegistrationMode
   templateUsed?: string
+  status?: EventStatus
 }
 
 export interface UpdateEventInput {

@@ -148,7 +148,7 @@ export async function updateStatus(userId: string, registrationId: string, newSt
   const updatedRegistration = await Registration.findByIdAndUpdate(
     registrationId,
     { status: newStatus },
-    { new: true }
+    { returnDocument: 'after' }
   )
 
   if (!updatedRegistration) {

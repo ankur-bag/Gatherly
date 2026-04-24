@@ -24,7 +24,7 @@ export async function POST() {
         name: clerkUser.fullName || `${clerkUser.firstName} ${clerkUser.lastName}`.trim() || 'User',
         email: clerkUser.emailAddresses[0]?.emailAddress,
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
 
     return NextResponse.json({ data: user.toObject() })

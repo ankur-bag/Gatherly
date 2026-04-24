@@ -20,6 +20,7 @@ export interface IEvent extends Document {
   zoomMeetingId?: string
   zoomJoinUrl?: string
   zoomSyncStatus?: ZoomSyncStatus
+  zoomError?: string
   reminderSentAt?: Date
   createdAt: Date
   updatedAt: Date
@@ -42,6 +43,7 @@ const EventSchema = new Schema<IEvent>(
     zoomMeetingId: { type: String },
     zoomJoinUrl: { type: String },
     zoomSyncStatus: { type: String, enum: ['pending', 'synced', 'failed', 'cancelled'] },
+    zoomError: { type: String },
     reminderSentAt: { type: Date },
   },
   { timestamps: true }

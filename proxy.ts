@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 const isPublicApiRoute = createRouteMatcher([
-  '/api/events/slug/(.*)',
+  '/api/events/public/(.*)',
   '/api/events/(.*)/registrations',
 ])
 

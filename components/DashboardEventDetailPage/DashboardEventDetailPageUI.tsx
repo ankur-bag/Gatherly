@@ -6,8 +6,9 @@ import { IEvent } from '@/types'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCalendar, FiClock, FiLink, FiMapPin, FiUsers, FiGlobe, FiShare2 } from 'react-icons/fi'
+import { FiArrowLeft, FiCalendar, FiClock, FiLink, FiMapPin, FiUsers, FiGlobe, FiRefreshCw } from 'react-icons/fi'
 
 interface IEventExtended extends IEvent {
   registrationsCount?: number
@@ -18,7 +19,9 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
   const { isLoaded } = useAuth()
   const [event, setEvent] = useState<IEventExtended | null>(null)
   const [loading, setLoading] = useState(true)
+  const [actionConfirm, setActionConfirm] = useState<'publish' | 'cancel' | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [retryLoading, setRetryLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -44,8 +47,6 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
   }, [eventId, isLoaded])
 
   async function handleAction(action: 'publish' | 'cancel') {
-    if (!confirm(`Are you sure you want to ${action} this event?`)) return
-
     setActionLoading(true)
     setError('')
 
@@ -64,6 +65,21 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
       setError('Failed to update event status')
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  async function handleZoomRetry() {
+    setRetryLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/events/${eventId}/zoom/retry`, { method: 'POST' })
+      if (!res.ok) throw new Error('Retry failed')
+      const { data } = await res.json()
+      setEvent(data)
+    } catch {
+      setError('Failed to retry Zoom sync')
+    } finally {
+      setRetryLoading(false)
     }
   }
 
@@ -125,7 +141,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
           <div className="flex flex-wrap items-center gap-3">
              {event.status === 'draft' ? (
                 <button
-                  onClick={() => handleAction('publish')}
+                  onClick={() => setActionConfirm('publish')}
                   disabled={actionLoading}
                   className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl bg-orange text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-orange/20 hover:-translate-y-1 transition-all disabled:opacity-50 cursor-pointer"
                 >
@@ -133,7 +149,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
                 </button>
              ) : (
                 <button
-                  onClick={() => handleAction('cancel')}
+                  onClick={() => setActionConfirm('cancel')}
                   disabled={actionLoading}
                   className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl glass border-red-100 text-red-500 text-xs font-bold flex items-center gap-2 hover:bg-red-50 transition-all disabled:opacity-50 cursor-pointer"
                 >
@@ -143,13 +159,25 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
              
              {isPublic && (
                 <Link
-                  href={`/events/${event.slugBase}-${event._id}`}
+                  href={`/events/${event._id}`}
                   target="_blank"
                   className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl glass border-black/5 text-charcoal text-xs font-bold flex items-center gap-2 hover:bg-black/5 transition-all shadow-sm"
                 >
                   <FiGlobe size={20} />
                   View Public
                 </Link>
+             )}
+
+             {/* Zoom Retry button — shown when sync has failed */}
+             {isPublic && event.isOnline && event.zoomSyncStatus === 'failed' && (
+               <button
+                 onClick={handleZoomRetry}
+                 disabled={retryLoading}
+                 className="h-10 lg:h-11 px-5 lg:px-6 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold flex items-center gap-2 hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
+               >
+                 <FiRefreshCw size={14} className={retryLoading ? 'animate-spin' : ''} />
+                 {retryLoading ? 'Retrying...' : 'Retry Zoom Sync'}
+               </button>
              )}
           </div>
         </div>
@@ -235,6 +263,23 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!actionConfirm}
+        title={actionConfirm === 'publish' ? 'Publish Event' : 'Cancel Event'}
+        message={actionConfirm === 'publish' 
+          ? 'Are you sure you want to publish this event? It will be visible to the public.' 
+          : 'Are you sure you want to cancel this event? Attendees will be notified.'}
+        confirmText={actionConfirm === 'publish' ? 'Publish' : 'Cancel Event'}
+        isDanger={actionConfirm === 'cancel'}
+        onCancel={() => setActionConfirm(null)}
+        onConfirm={() => {
+          if (actionConfirm) {
+            handleAction(actionConfirm)
+            setActionConfirm(null)
+          }
+        }}
+      />
     </DashboardLayout>
   )
 }

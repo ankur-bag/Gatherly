@@ -1,20 +1,22 @@
 import * as React from 'react'
 import BaseLayout from './BaseLayout'
-import { Text, Link, Section } from '@react-email/components'
+import { Text, Link, Section, Button } from '@react-email/components'
 
 interface ApprovedProps {
   attendeeName: string
   eventTitle: string
   eventDateTime: string
+  zoomJoinUrl?: string
 }
 
 export default function Approved({
   attendeeName,
   eventTitle,
   eventDateTime,
-}) {
+  zoomJoinUrl,
+}: ApprovedProps) {
   return (
-    <BaseLayout 
+    <BaseLayout
       previewText={`Great news! You are approved for ${eventTitle}`}
       title="You're Approved!"
     >
@@ -24,14 +26,32 @@ export default function Approved({
       <Text style={text}>
         Great news! Your application for <strong>{eventTitle}</strong> has been approved. We're excited to have you join us.
       </Text>
-      
+
       <Section style={infoCard}>
         <Text style={infoLabel}>Event Details</Text>
         <Text style={infoValue}>{eventTitle}</Text>
-        <Text style={infoLabel}>Date & Time</Text>
+        <Text style={infoLabel}>Date &amp; Time</Text>
         <Text style={infoValue}>{eventDateTime}</Text>
+
+        {zoomJoinUrl && (
+          <>
+            <Text style={infoLabel}>Join Link</Text>
+            <Text style={{ ...infoValue, fontSize: '14px' }}>
+              <Link href={zoomJoinUrl} style={linkStyle}>
+                {zoomJoinUrl}
+              </Link>
+            </Text>
+          </>
+        )}
       </Section>
 
+      {zoomJoinUrl && (
+        <Section style={{ textAlign: 'center' as const, margin: '16px 0 24px' }}>
+          <Button href={zoomJoinUrl} style={joinButton}>
+            Join Zoom Meeting
+          </Button>
+        </Section>
+      )}
 
       <Text style={text}>
         If you have any questions, feel free to reach out to the event organizer.
@@ -69,3 +89,17 @@ const infoValue = {
   margin: '0 0 16px',
 }
 
+const linkStyle = {
+  color: '#3b7fd9',
+}
+
+const joinButton = {
+  backgroundColor: '#2563a8',
+  color: '#ffffff',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  fontWeight: 'bold',
+  fontSize: '14px',
+  textDecoration: 'none',
+  display: 'inline-block',
+}

@@ -9,7 +9,7 @@ import { PublicEventShell } from './PublicEventShell'
 import { FeedbackState, PublicEventPayload, PublicStatus, RegistrationFormState } from './types'
 
 interface PublicEventPageUIProps {
-  slug: string
+  id: string
 }
 
 function getErrorMessage(error: unknown): string {
@@ -24,7 +24,7 @@ function getSuccessMessage(status: IRegistration['status']): string {
   return 'You are confirmed. We have sent the details to your email address.'
 }
 
-export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
+export function PublicEventPageUI({ id }: PublicEventPageUIProps) {
   const [eventPayload, setEventPayload] = useState<PublicEventPayload | null>(null)
   const [formData, setFormData] = useState<RegistrationFormState>({ attendeeName: '', attendeeEmail: '' })
   const [feedback, setFeedback] = useState<FeedbackState | null>(null)
@@ -37,13 +37,8 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
   useEffect(() => {
     async function fetchEvent() {
       try {
-        const response = await fetch(`/api/events/slug/${slug}`)
-        const body = (await response.json()) as { data?: PublicEventPayload; redirectUrl?: string; error?: string }
-        
-        if (body.redirectUrl) {
-          window.location.replace(body.redirectUrl)
-          return
-        }
+        const response = await fetch(`/api/events/public/${id}`)
+        const body = (await response.json()) as { data?: PublicEventPayload; error?: string }
 
         if (!response.ok) {
           throw new Error(body.error || 'Failed to load event')
@@ -60,7 +55,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
     }
 
     fetchEvent()
-  }, [slug])
+  }, [id])
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -88,7 +83,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
         throw new Error(body.error || 'Failed to submit registration')
       }
 
-      if (body.data?.status === 'registered' || body.data?.status === 'approved') {
+      if (body.data?.status === 'pending' || body.data?.status === 'confirmed') {
         setEventPayload((previous) => {
           if (!previous) return previous
           return {
@@ -98,7 +93,7 @@ export function PublicEventPageUI({ slug }: PublicEventPageUIProps) {
         })
       }
 
-      const registrationStatus = body.data?.status || 'registered'
+      const registrationStatus = (body.data?.status || 'pending') as IRegistration['status']
       setRegistrationStatus(registrationStatus)
       setFeedback({ kind: 'success', message: getSuccessMessage(registrationStatus) })
       setRegistered(true)

@@ -16,7 +16,7 @@ export async function syncOrGet(clerkId: string, { name, email }: { name: string
       name,
       email,
     },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   )
 
   return user.toObject()
@@ -51,7 +51,7 @@ export async function updateSettings(
     updateData.zoomClientSecret = zoomClientSecret
   }
 
-  const user = await User.findOneAndUpdate({ clerkId }, updateData, { new: true })
+  const user = await User.findOneAndUpdate({ clerkId }, updateData, { returnDocument: 'after' })
   if (!user) {
     throw new Error('Not found')
   }

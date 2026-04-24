@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { FiArrowLeft, FiCheck, FiFilter, FiMail, FiSearch, FiX, FiUser } from 'react-icons/fi'
 import { useToast } from '../ui/Toast'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 
 export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) {
   const { isLoaded } = useAuth()
@@ -20,6 +21,7 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
   const [filter, setFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
+  const [bulkActionConfirm, setBulkActionConfirm] = useState<'approve' | 'reject' | null>(null)
 
   const fetchAttendees = async () => {
     try {
@@ -72,8 +74,6 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
   }
 
   async function handleBulkAction(action: 'approve' | 'reject') {
-    if (!confirm(`Are you sure you want to ${action} ${selectedIds.length} selected guests?`)) return
-    
     setBulkActionLoading(true)
     try {
       const res = await fetch('/api/registrations/bulk-update', {
@@ -191,14 +191,14 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
                   {selectedIds.length} Selected
                 </span>
                 <button
-                  onClick={() => handleBulkAction('approve')}
+                  onClick={() => setBulkActionConfirm('approve')}
                   disabled={bulkActionLoading}
                   className="h-10 px-4 rounded-xl bg-green-50 text-green-600 text-[13px] font-bold border border-green-100 hover:bg-green-600 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
                   <FiCheck size={14} /> Approve All
                 </button>
                 <button
-                  onClick={() => handleBulkAction('reject')}
+                  onClick={() => setBulkActionConfirm('reject')}
                   disabled={bulkActionLoading}
                   className="h-10 px-4 rounded-xl bg-red-50 text-red-500 text-[13px] font-bold border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
@@ -341,6 +341,21 @@ export function DashboardEventAttendeesPageUI({ eventId }: { eventId: string }) 
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!bulkActionConfirm}
+        title={bulkActionConfirm === 'approve' ? 'Approve Guests' : 'Reject Guests'}
+        message={`Are you sure you want to ${bulkActionConfirm} ${selectedIds.length} selected guests? This action cannot be undone.`}
+        confirmText={bulkActionConfirm === 'approve' ? 'Approve' : 'Reject'}
+        isDanger={bulkActionConfirm === 'reject'}
+        onCancel={() => setBulkActionConfirm(null)}
+        onConfirm={() => {
+          if (bulkActionConfirm) {
+            handleBulkAction(bulkActionConfirm)
+            setBulkActionConfirm(null)
+          }
+        }}
+      />
     </DashboardLayout>
   )
 }

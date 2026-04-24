@@ -214,21 +214,32 @@ export function DashboardEventCreatePageUI() {
               </div>
             </div>
 
-            {/* Venue / Location */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
-                <FiMapPin size={12} />
-                {form.isOnline ? 'Meeting Link' : 'Venue'}
-              </label>
-              <input
-                type="text"
-                value={form.venue}
-                onChange={(e) => updateForm('venue', e.target.value)}
-                required={!form.isOnline}
-                placeholder={form.isOnline ? 'e.g., https://zoom.us/j/...' : 'e.g., 123 Main St, San Francisco'}
-                className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
-              />
-            </div>
+            {/* Venue (in-person) or Auto-Zoom info (online) */}
+            {form.isOnline ? (
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <span className="mt-0.5 flex-shrink-0 text-blue-400">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </span>
+                <p className="text-sm font-medium text-blue-700">
+                  A Zoom meeting link will be <span className="font-bold">automatically generated</span> when you publish this event. No manual link needed.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
+                  <FiMapPin size={12} />
+                  Venue
+                </label>
+                <input
+                  type="text"
+                  value={form.venue}
+                  onChange={(e) => updateForm('venue', e.target.value)}
+                  required
+                  placeholder="e.g., 123 Main St, San Francisco"
+                  className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal placeholder-charcoal/30 focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
+                />
+              </div>
+            )}
           </div>
 
           {/* Section 3: Capacity & Registration */}

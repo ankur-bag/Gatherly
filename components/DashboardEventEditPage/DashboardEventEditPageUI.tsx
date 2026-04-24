@@ -233,19 +233,31 @@ export function DashboardEventEditPageUI({ eventId }: { eventId: string }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
-                <FiMapPin size={12} />
-                {form.isOnline ? 'Meeting Link' : 'Venue'}
-              </label>
-              <input
-                type="text"
-                value={form.venue}
-                onChange={(e) => updateForm('venue', e.target.value)}
-                required={!form.isOnline}
-                className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
-              />
-            </div>
+            {/* Venue (in-person) or Auto-Zoom info (online) */}
+            {form.isOnline ? (
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <span className="mt-0.5 flex-shrink-0 text-blue-400">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </span>
+                <p className="text-sm font-medium text-blue-700">
+                  Zoom meeting is <span className="font-bold">automatically managed</span> by the platform. Changes to title or date will be synced with Zoom on save.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-charcoal/50 mb-2.5 ml-0.5 flex items-center gap-2">
+                  <FiMapPin size={12} />
+                  Venue
+                </label>
+                <input
+                  type="text"
+                  value={form.venue}
+                  onChange={(e) => updateForm('venue', e.target.value)}
+                  required={!form.isOnline}
+                  className="w-full h-11 rounded-lg bg-white border border-charcoal/8 px-4 font-semibold text-charcoal focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-transparent transition-all"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-5 pb-8 border-b border-charcoal/5">

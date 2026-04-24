@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { FiCalendar, FiEdit2, FiEye, FiPlus, FiUsers, FiArrowLeft } from 'react-icons/fi'
 import { useToast } from '../ui/Toast'
 import { IRegistration } from '@/types'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 
 interface IEventWithCount extends IEvent {
   registrationsCount?: number
@@ -24,6 +25,7 @@ export function DashboardPageUI() {
   const [events, setEvents] = useState<IEventWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoaded) return
@@ -57,7 +59,6 @@ export function DashboardPageUI() {
   }
 
   const handleDelete = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return
     setProcessingId(eventId)
     try {
       const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' })
@@ -75,7 +76,7 @@ export function DashboardPageUI() {
   }
 
   const copyPublicLink = (event: IEvent) => {
-    const url = `${window.location.origin}/events/${event.slugBase}-${event._id}`
+    const url = `${window.location.origin}/events/${event._id}`
     navigator.clipboard.writeText(url)
     showToast('Link copied to clipboard')
   }
@@ -164,7 +165,7 @@ export function DashboardPageUI() {
                       key={event._id?.toString() || idx} 
                       event={event} 
                       onLaunch={handleLaunch} 
-                      onDelete={handleDelete} 
+                      onDelete={(id) => setDeleteConfirmId(id)} 
                       onCopyStatus={() => copyPublicLink(event)}
                       processingId={processingId}
                     />
@@ -190,7 +191,7 @@ export function DashboardPageUI() {
                       key={event._id?.toString() || idx} 
                       event={event} 
                       onLaunch={handleLaunch} 
-                      onDelete={handleDelete} 
+                      onDelete={(id) => setDeleteConfirmId(id)} 
                       onCopyStatus={() => copyPublicLink(event)}
                       processingId={processingId}
                     />
@@ -201,6 +202,22 @@ export function DashboardPageUI() {
           </div>
         )}
       </div>
+      
+      <ConfirmModal
+        isOpen={!!deleteConfirmId}
+        title="Delete Event"
+        message="Are you sure you want to delete this event? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        onConfirm={() => {
+          if (deleteConfirmId) {
+            handleDelete(deleteConfirmId)
+            setDeleteConfirmId(null)
+          }
+        }}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
     </DashboardLayout>
   )
 }
@@ -313,7 +330,7 @@ function EventCard({
                   </button>
 
                   <Link
-                     href={`/events/${event.slugBase}-${event._id}`}
+                     href={`/events/${event._id}`}
                      target="_blank"
                      className="h-10 w-14 rounded-xl cursor-pointer glass border-charcoal/5 flex items-center justify-center text-charcoal hover:bg-orange hover:text-white transition-all shadow-sm"
                   >

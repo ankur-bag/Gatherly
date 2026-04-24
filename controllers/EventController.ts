@@ -43,7 +43,19 @@ export async function create(userId: string, body: CreateEventInput): Promise<IE
     slugBase,
     slug: slugBase, // Backward sync
     status: body.status || 'draft',
+    zoomSyncStatus: body.isOnline ? 'pending' : undefined,
   })
+
+  // If online, trigger Zoom sync immediately when created as published
+  if (body.isOnline && (body.status === 'published')) {
+    const organizer = await User.findOne({ clerkId: userId })
+    if (organizer) {
+      await triggerHook('event.published', {
+        event: event.toObject(),
+        organizer: organizer.toObject(),
+      })
+    }
+  }
 
   return event.toObject()
 }
@@ -72,45 +84,64 @@ export async function getById(userId: string, eventId: string): Promise<any> {
   }
 }
 
-export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; publicStatus: string | null; activeCount: number; redirectUrl?: string }> {
+export async function getByIdPublic(eventId: string): Promise<{ event: IEvent; publicStatus: string | null; activeCount: number }> {
   await dbConnect()
-
-  // 1. Handle Legacy Format with '---'
-  if (slugInUrl.includes('---')) {
-    const event = await Event.findOne({ slug: slugInUrl })
-    if (event) {
-      return {
-        event: event.toObject(),
-        publicStatus: null,
-        activeCount: 0,
-        redirectUrl: `/events/${generateBaseSlug(event.title)}-${event._id}`
-      }
-    }
-    throw new Error('Not found')
-  }
-
-  // 2. Extract ID using regex: -[24-char-hex-id]
-  const match = slugInUrl.match(/-([a-f0-9]{24})$/)
-  if (!match) {
-    throw new Error('Not found')
-  }
-
-  const eventId = match[1]
-  const incomingBase = slugInUrl.replace(/-[a-f0-9]{24}$/, '')
 
   const event = await Event.findById(eventId)
   if (!event || event.status !== 'published') {
     throw new Error('Not found')
   }
 
-  // 3. SEO Check: Compare incoming slug base with current title-derived base
+  // Compute active count (only confirmed)
+  const activeCount = await Registration.countDocuments({
+    eventId: event._id,
+    status: 'confirmed',
+  })
+
+  // Compute public status
+  const getPublicStatus = (eventDoc: any, count: number) => {
+    if (new Date() > new Date(eventDoc.dateTime)) return 'Closed'
+    if (count >= eventDoc.capacity) return 'Full'
+    return 'Open'
+  }
+
+  const publicStatus = getPublicStatus(event, activeCount)
+
+  return {
+    event: event.toObject(),
+    publicStatus,
+    activeCount,
+  }
+}
+
+export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; publicStatus: string | null; activeCount: number; redirectUrl?: string }> {
+  await dbConnect()
+
+  // Always extract the trailing 24-char MongoDB ObjectId from slug.
+  // This handles ALL formats:
+  //   new: title-words-{id}
+  //   old: title---subtitle-{id}   (triple-dash legacy with ID at end)
+  const match = slugInUrl.match(/([a-f0-9]{24})$/)
+  if (!match) {
+    throw new Error('Not found')
+  }
+
+  const eventId = match[1]
+
+  const event = await Event.findById(eventId)
+  if (!event || event.status !== 'published') {
+    throw new Error('Not found')
+  }
+
+  // SEO canonical-redirect: if the slug base doesn't match current title, redirect cleanly
   const correctBase = generateBaseSlug(event.title)
-  if (incomingBase !== correctBase) {
+  const correctSlug = `${correctBase}-${event._id}`
+  if (slugInUrl !== correctSlug) {
     return {
       event: event.toObject(),
       publicStatus: null,
       activeCount: 0,
-      redirectUrl: `/events/${correctBase}-${event._id}`
+      redirectUrl: `/events/${correctSlug}`,
     }
   }
 
@@ -126,6 +157,7 @@ export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; pub
     if (count >= eventDoc.capacity) return 'Full'
     return 'Open'
   }
+
 
   const publicStatus = getPublicStatus(event, activeCount)
 
@@ -184,7 +216,7 @@ export async function update(userId: string, eventId: string, body: UpdateEventI
     updateData.registrationMode = body.registrationMode
   }
 
-  const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, { new: true })
+  const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, { returnDocument: 'after' })
   if (!updatedEvent) {
     throw new Error('Not found')
   }
@@ -226,7 +258,7 @@ export async function publish(userId: string, eventId: string): Promise<IEvent> 
     throw new Error('In-person events must have a venue')
   }
 
-  const publishedEvent = await Event.findByIdAndUpdate(eventId, { status: 'published' }, { new: true })
+  const publishedEvent = await Event.findByIdAndUpdate(eventId, { status: 'published' }, { returnDocument: 'after' })
   if (!publishedEvent) {
     throw new Error('Not found')
   }
@@ -257,7 +289,7 @@ export async function cancel(userId: string, eventId: string): Promise<IEvent> {
     throw new Error('Forbidden')
   }
 
-  const cancelledEvent = await Event.findByIdAndUpdate(eventId, { status: 'cancelled' }, { new: true })
+  const cancelledEvent = await Event.findByIdAndUpdate(eventId, { status: 'cancelled' }, { returnDocument: 'after' })
   if (!cancelledEvent) {
     throw new Error('Not found')
   }

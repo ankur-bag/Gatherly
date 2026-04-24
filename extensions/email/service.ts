@@ -70,6 +70,7 @@ export async function sendApproved(registration: IRegistration, event: IEvent) {
         attendeeName: registration.attendeeName,
         eventTitle: event.title,
         eventDateTime: new Date(event.dateTime).toLocaleString(),
+        zoomJoinUrl: event.isOnline ? (event.zoomJoinUrl ?? undefined) : undefined,
       })
     )
     await sendEmail(registration.attendeeEmail, `You are approved for ${event.title}`, html)

@@ -1,11 +1,11 @@
 import { PublicEventPageUI } from '@/components/PublicEventPage/PublicEventPageUI'
 
 interface PublicEventRouteProps {
-  params: Promise<{ slug: string }>
+  params: Promise<{ id: string }>
 }
 
 export default async function PublicEventRoute({ params }: PublicEventRouteProps) {
-  const { slug } = await params
+  const { id } = await params
 
-  return <PublicEventPageUI slug={slug} />
+  return <PublicEventPageUI id={id} />
 }

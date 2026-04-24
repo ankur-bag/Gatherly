@@ -1,118 +1,116 @@
-import { IEvent, IUser } from '@/types'
+// ─── Token cache ──────────────────────────────────────────────────────────────
+let cachedToken: string | null = null
+let tokenExpiry = 0
 
-export async function getAccessToken(organizer: IUser): Promise<string> {
-  const accountId = organizer.zoomAccountId || process.env.ZOOM_ACCOUNT_ID
-  const clientId = organizer.zoomClientId || process.env.ZOOM_CLIENT_ID
-  const clientSecret = organizer.zoomClientSecret || process.env.ZOOM_CLIENT_SECRET
+export async function getAccessToken(): Promise<string> {
+  const now = Date.now()
 
-  if (!accountId || !clientId || !clientSecret) {
-    throw new Error('Missing Zoom credentials')
+  if (cachedToken && now < tokenExpiry) {
+    return cachedToken
   }
 
-  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
-  const tokenUrl = `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${encodeURIComponent(accountId)}`
+  const url = new URL('https://zoom.us/oauth/token')
+  url.searchParams.append('grant_type', 'account_credentials')
+  url.searchParams.append('account_id', process.env.ZOOM_ACCOUNT_ID || '')
 
-  const response = await fetch(tokenUrl, {
+  const res = await fetch(url.toString(), {
     method: 'POST',
     headers: {
-      Authorization: `Basic ${auth}`,
+      Authorization: `Basic ${Buffer.from(
+        `${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`
+      ).toString('base64')}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    cache: 'no-store',
   })
 
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Zoom token request failed (${response.status}): ${errorBody}`)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Zoom access token: ${res.status}`)
   }
 
-  const data = (await response.json()) as { access_token?: string }
-  if (!data.access_token) {
-    throw new Error('Zoom token response missing access token')
-  }
+  const data = await res.json()
 
-  return data.access_token
+  cachedToken = data.access_token
+  // Expire 60 seconds before actual expiry to be safe
+  tokenExpiry = now + (data.expires_in - 60) * 1000
+
+  return cachedToken as string
 }
 
-export async function createMeeting(event: IEvent, organizer: IUser): Promise<{ meetingId: string; joinUrl: string }> {
-  const accessToken = await getAccessToken(organizer)
+// ─── Safe wrapper ─────────────────────────────────────────────────────────────
+async function safeZoomCall<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn()
+  } catch (err) {
+    console.error('[Zoom Error]', err)
+    throw err
+  }
+}
 
-  const response = await fetch('https://api.zoom.us/v2/users/me/meetings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      topic: event.title,
-      type: 2,
-      start_time: new Date(event.dateTime).toISOString(),
-      duration: 60,
-      timezone: 'UTC',
-      agenda: event.description,
-      settings: {
-        join_before_host: false,
-        waiting_room: true,
-        approval_type: 2,
+// ─── Meetings ─────────────────────────────────────────────────────────────────
+export async function createMeeting(event: any) {
+  return safeZoomCall(async () => {
+    const token = await getAccessToken()
+
+    const res = await fetch('https://api.zoom.us/v2/users/me/meetings', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-    }),
-    cache: 'no-store',
+      body: JSON.stringify({
+        topic: event.title,
+        type: 2, // Scheduled
+        start_time: new Date(event.dateTime).toISOString(), // Explicit ISO with timezone
+        duration: 60,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`Failed to create Zoom meeting: ${res.status} ${err}`)
+    }
+
+    return res.json()
   })
-
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Zoom create meeting failed (${response.status}): ${errorBody}`)
-  }
-
-  const data = (await response.json()) as { id?: number | string; join_url?: string }
-  if (!data.id || !data.join_url) {
-    throw new Error('Zoom create meeting response missing id or join_url')
-  }
-
-  return {
-    meetingId: String(data.id),
-    joinUrl: data.join_url,
-  }
 }
 
-export async function updateMeeting(meetingId: string, event: IEvent, organizer: IUser): Promise<void> {
-  const accessToken = await getAccessToken(organizer)
+export async function updateMeeting(meetingId: string, event: any) {
+  return safeZoomCall(async () => {
+    const token = await getAccessToken()
 
-  const response = await fetch(`https://api.zoom.us/v2/meetings/${encodeURIComponent(meetingId)}`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      topic: event.title,
-      start_time: new Date(event.dateTime).toISOString(),
-      agenda: event.description,
-      duration: 60,
-      timezone: 'UTC',
-    }),
-    cache: 'no-store',
+    const res = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        topic: event.title,
+        start_time: new Date(event.dateTime).toISOString(), // Explicit ISO with timezone
+      }),
+    })
+
+    if (res.status !== 204 && !res.ok) {
+      const err = await res.text()
+      throw new Error(`Failed to update Zoom meeting: ${res.status} ${err}`)
+    }
   })
-
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Zoom update meeting failed (${response.status}): ${errorBody}`)
-  }
 }
 
-export async function deleteMeeting(meetingId: string, organizer: IUser): Promise<void> {
-  const accessToken = await getAccessToken(organizer)
+export async function deleteMeeting(meetingId: string) {
+  return safeZoomCall(async () => {
+    const token = await getAccessToken()
 
-  const response = await fetch(`https://api.zoom.us/v2/meetings/${encodeURIComponent(meetingId)}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: 'no-store',
+    const res = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (res.status !== 204 && !res.ok) {
+      const err = await res.text()
+      throw new Error(`Failed to delete Zoom meeting: ${res.status} ${err}`)
+    }
   })
-
-  if (!response.ok && response.status !== 404) {
-    const errorBody = await response.text()
-    throw new Error(`Zoom delete meeting failed (${response.status}): ${errorBody}`)
-  }
 }
