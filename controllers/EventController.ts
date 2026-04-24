@@ -1,6 +1,6 @@
 import { dbConnect } from '@/lib/mongodb'
 import { triggerHook } from '@/lib/hooks'
-import { generateBaseSlug } from '@/lib/utils'
+import { generateBaseSlug, getPublicStatus } from '@/lib/utils'
 import Event from '@/models/Event'
 import Registration from '@/models/Registration'
 import User from '@/models/User'
@@ -88,7 +88,7 @@ export async function getByIdPublic(eventId: string): Promise<{ event: IEvent; p
   await dbConnect()
 
   const event = await Event.findById(eventId)
-  if (!event || event.status !== 'published') {
+  if (!event || (event.status !== 'published' && event.status !== 'cancelled')) {
     throw new Error('Not found')
   }
 
@@ -97,13 +97,6 @@ export async function getByIdPublic(eventId: string): Promise<{ event: IEvent; p
     eventId: event._id,
     status: 'confirmed',
   })
-
-  // Compute public status
-  const getPublicStatus = (eventDoc: any, count: number) => {
-    if (new Date() > new Date(eventDoc.dateTime)) return 'Closed'
-    if (count >= eventDoc.capacity) return 'Full'
-    return 'Open'
-  }
 
   const publicStatus = getPublicStatus(event, activeCount)
 
@@ -129,7 +122,7 @@ export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; pub
   const eventId = match[1]
 
   const event = await Event.findById(eventId)
-  if (!event || event.status !== 'published') {
+  if (!event || (event.status !== 'published' && event.status !== 'cancelled')) {
     throw new Error('Not found')
   }
 
@@ -150,14 +143,6 @@ export async function getBySlug(slugInUrl: string): Promise<{ event: IEvent; pub
     eventId: event._id,
     status: 'confirmed',
   })
-
-  // Compute public status
-  const getPublicStatus = (eventDoc: any, count: number) => {
-    if (new Date() > new Date(eventDoc.dateTime)) return 'Closed'
-    if (count >= eventDoc.capacity) return 'Full'
-    return 'Open'
-  }
-
 
   const publicStatus = getPublicStatus(event, activeCount)
 
