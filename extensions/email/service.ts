@@ -114,6 +114,7 @@ export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
   try {
     // Get all registered attendees
     const Registration = (await import('@/models/Registration').then((m) => m.default))
+    const EventUpdated = (await import('./templates/EventUpdated').then((m) => m.default))
     const registrations = await Registration.find({
       eventId: event._id,
       status: 'confirmed',
@@ -141,6 +142,7 @@ export async function sendEventCancelled(event: IEvent) {
   try {
     // Get all registrations for the event, regardless of status
     const Registration = (await import('@/models/Registration').then((m) => m.default))
+    const EventCancelled = (await import('./templates/EventCancelled').then((m) => m.default))
     const registrations = await Registration.find({
       eventId: event._id,
     })

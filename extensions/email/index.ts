@@ -20,7 +20,7 @@ export function registerEmailExtension() {
     }
   })
 
-  onHook('registration.confirmed', async ({ registration, event }) => {
+  onHook('registration.approved', async ({ registration, event }) => {
     await sendApproved(registration, event)
   })
 

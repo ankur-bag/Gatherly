@@ -8,7 +8,7 @@ interface EventCancelledProps {
 
 export default function EventCancelled({
   eventTitle,
-}) {
+}: EventCancelledProps) {
   return (
     <BaseLayout 
       previewText={`Important: ${eventTitle} has been cancelled`}

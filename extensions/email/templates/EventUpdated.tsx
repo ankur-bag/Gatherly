@@ -10,7 +10,7 @@ interface EventUpdatedProps {
 export default function EventUpdated({
   eventTitle,
   changedFields,
-}) {
+}: EventUpdatedProps) {
   return (
     <BaseLayout 
       previewText={`Important updates for ${eventTitle}`}
