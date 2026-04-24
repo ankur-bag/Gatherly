@@ -128,7 +128,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
     )
   }
 
-  const isPublic = event.status === 'published'
+  const showRegistrations = event.status === 'published' || event.status === 'cancelled'
 
   return (
     <DashboardLayout>
@@ -173,7 +173,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
                 </button>
              )}
              
-             {isPublic && (
+             {showRegistrations && (
                 <Link
                   href={`/events/${event._id}`}
                   target="_blank"
@@ -185,7 +185,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
              )}
 
              {/* Zoom Retry button — shown when sync has failed */}
-             {isPublic && event.isOnline && event.zoomSyncStatus === 'failed' && (
+             {event.status === 'published' && event.isOnline && event.zoomSyncStatus === 'failed' && (
                <button
                  onClick={handleZoomRetry}
                  disabled={retryLoading}
@@ -251,7 +251,7 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
         </div>
 
         {/* Quick Actions / Navigation */}
-        {isPublic && (
+          {showRegistrations && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <Link 
                 href={`/dashboard/events/${event._id?.toString()}/attendees`}
@@ -261,12 +261,12 @@ export function DashboardEventDetailPageUI({ eventId }: { eventId: string }) {
                    <FiUsers size={28} />
                 </div>
                 <div>
-                   <h3 className="text-2xl font-medium mb-2 group-hover:text-orange transition-colors">Manage Guests</h3>
+                   <h3 className="text-2xl font-medium mb-2 group-hover:text-orange transition-colors">Registrations</h3>
                    <p className="text-charcoal/40 font-medium">Review registration flows and update guest statuses.</p>
                 </div>
              </Link>
 
-             {event.isOnline && event.zoomJoinUrl && (
+               {event.status === 'published' && event.isOnline && event.zoomJoinUrl && (
                <div className="bento-card group flex flex-col justify-between hover:bg-blue-50">
                  <a
                    href={event.zoomJoinUrl}

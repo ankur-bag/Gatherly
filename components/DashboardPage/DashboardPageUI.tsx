@@ -99,8 +99,9 @@ export function DashboardPageUI() {
     )
   }
 
-  const launchedEvents = events.filter(e => e.status === 'published')
-  const draftEvents = events.filter(e => e.status !== 'published')
+  const launchedEvents = events.filter((event) => event.status === 'published')
+  const draftEvents = events.filter((event) => event.status === 'draft')
+  const cancelledEvents = events.filter((event) => event.status === 'cancelled')
 
   return (
     <DashboardLayout>
@@ -181,12 +182,38 @@ export function DashboardPageUI() {
                   <div className="h-[1px] flex-1 bg-charcoal/5" />
                   <h2 className="text-xs font-bold uppercase tracking-[0.4em] text-charcoal/30 flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-orange/40" />
-                    Drafts & Archive
+                    Drafts
                   </h2>
                   <div className="h-[1px] flex-1 bg-charcoal/5" />
                 </div>
                 <div className="grid gap-8">
                   {draftEvents.map((event, idx) => (
+                    <EventCard 
+                      key={event._id?.toString() || idx} 
+                      event={event} 
+                      onLaunch={handleLaunch} 
+                      onDelete={(id) => setDeleteConfirmId(id)} 
+                      onCopyStatus={() => copyPublicLink(event)}
+                      processingId={processingId}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Cancelled Section */}
+            {cancelledEvents.length > 0 && (
+              <section>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-[1px] flex-1 bg-charcoal/5" />
+                  <h2 className="text-xs font-bold uppercase tracking-[0.4em] text-charcoal/30 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-red-400" />
+                    Cancelled
+                  </h2>
+                  <div className="h-[1px] flex-1 bg-charcoal/5" />
+                </div>
+                <div className="grid gap-8">
+                  {cancelledEvents.map((event, idx) => (
                     <EventCard 
                       key={event._id?.toString() || idx} 
                       event={event} 
