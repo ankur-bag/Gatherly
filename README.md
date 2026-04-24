@@ -1,4 +1,4 @@
-# GoAvo Mini
+# GoAvo Mini-Avento
 
 GoAvo Mini is a Next.js event management app for organizers who publish events, manage RSVPs, and sync online events with Zoom.
 
