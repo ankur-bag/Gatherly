@@ -59,7 +59,7 @@ export default function VercepFeature1() {
   const m3 = roadmapRoadblocks.slice(8);
 
   return (
-    <section id="capabilities" className="relative bg-cream pt-24 lg:pt-48 overflow-hidden">
+    <section id="features" className="relative bg-cream pt-24 lg:pt-48 overflow-hidden">
       <div className="mx-auto max-w-full">
         {/* Header Section */}
         <div className="section-container flex flex-col items-center text-center space-y-8 mb-24">

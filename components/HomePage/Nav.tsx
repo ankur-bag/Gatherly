@@ -14,18 +14,18 @@ interface NavProps {
 
 export function Nav({ isSignedIn }: NavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
   const { scrollY } = useScroll();
   const lastScrollY = useRef(0);
 
   /**
-   * Smooth scroll logic - Always visible
+   * Smooth scroll logic - Hide on hero
    */
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 80);
-    setIsVisible(true);
+    setIsVisible(latest > (typeof window !== "undefined" ? window.innerHeight * 0.8 : 800));
   });
 
   const navLinks: any[] = [];
