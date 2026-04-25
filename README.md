@@ -11,7 +11,7 @@ GoAvo Mini is a Next.js event management app for organizers who publish events, 
 - Clerk for authentication and route protection
 - MongoDB with Mongoose
 - Resend and React Email for transactional email
-- Zoom Server-to-Server OAuth for meeting sync
+- Zoom User OAuth + extension hooks for meeting sync
 
 ## Setup
 
@@ -48,13 +48,14 @@ Required variables:
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
-- `ZOOM_ACCOUNT_ID`
 - `ZOOM_CLIENT_ID`
 - `ZOOM_CLIENT_SECRET`
 
 Optional but useful:
 
 - `NEXT_PUBLIC_BASE_URL` for email template links and previews
+- `ZOOM_REDIRECT_URI` (default: `http://localhost:3000/api/zoom/callback`)
+- `ZOOM_OAUTH_SCOPES` (default in code: `meeting:write:meeting`)
 
 ## Assumptions and Tradeoffs
 
@@ -62,7 +63,9 @@ Optional but useful:
 - Event ownership is enforced in controllers using `organizerClerkId`, so organizers only access their own data.
 - Public event URLs are ID-based at `/events/[id]` to keep links stable around the stored MongoDB ObjectId.
 - Business side effects are pushed into hooks and extensions so routes stay thin and controllers own the core logic.
-- Zoom credentials can come from organizer settings or environment variables; failures are captured in `zoomSyncStatus` and `zoomError` instead of breaking the request.
+- Zoom connect/disconnect is managed through OAuth routes, and token lifecycle is handled in the Zoom service layer.
+- Online event launch is guarded in the create UI: organizers must connect Zoom first before publishing online events.
+- Zoom failures are captured in `zoomSyncStatus` and `zoomError` instead of breaking organizer workflows.
 - Email delivery uses Resend. If delivery fails, the app logs the error and continues.
 
 ## Feature Checklist
@@ -100,6 +103,32 @@ Optional but useful:
 08. Capacity Rules - implemented
 - New registrations are blocked when an event is full, cancelled, or past its date.
 - Revoked attendees no longer count against capacity.
+
+09. Zoom Integration Layer - implemented
+- Organizer OAuth connect flow is available at `/api/zoom/connect` and callback handling is done at `/api/zoom/callback`.
+- Zoom extension subscribes to event hooks to create, update, end, and delete meetings.
+- If Zoom account profile scopes are missing, account detail lookup is skipped safely and connection still succeeds.
+- Online events require a connected Zoom account before launch from the create page.
+
+## Zoom Extension Layer
+
+Zoom is implemented as an extension, not as route-level business logic.
+
+- Routes:
+	- `/api/zoom/connect` builds OAuth authorize URL, sets CSRF/state cookies, and redirects to Zoom consent.
+	- `/api/zoom/callback` validates state, exchanges code for tokens, and stores token metadata on the organizer user.
+	- `/api/zoom/disconnect` clears Zoom connection state.
+- Service (`extensions/zoom/service.ts`):
+	- Handles token exchange and refresh.
+	- Automatically refreshes access tokens before Zoom API calls.
+	- Marks disconnected/revoked/expired states and prevents unsafe retries.
+	- Uses a safe account-details lookup so missing optional scopes do not fail OAuth completion.
+- Extension (`extensions/zoom/index.ts`):
+	- `event.published` -> create meeting for online events.
+	- `event.updated` -> patch meeting details or delete when switched to in-person.
+	- `event.cancelled` -> end and delete meeting, then clear join metadata.
+
+This keeps API routes thin and keeps Zoom side effects isolated from core event CRUD logic.
 
 ## Run Commands
 
