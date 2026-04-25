@@ -1,10 +1,14 @@
 # GoAvo Mini-Avento
 
-![Avento Preview](https://i.postimg.cc/Ssm246y8/Whats-App-Image-2026-04-25-at-6-35-55-PM.jpg)
+<p align="center">
+  <img src="https://i.postimg.cc/Ssm246y8/Whats-App-Image-2026-04-25-at-6-35-55-PM.jpg" width="100%" />
+</p>
 
-Live Website: https://goavo-avento.vercel.app/
+<p align="center">
+<a href="https://goavo-avento.vercel.app/">Live Demo</a>
+</p>
 
-GoAvo Mini is a Next.js event management app for organizers who publish events, manage RSVPs, and sync online events with Zoom.
+Avento is a full-stack event management platform built with Next.js that enables organizers to create events, manage RSVPs, and seamlessly sync online events with Zoom.
 
 ## Tech Stack
 
