@@ -28,8 +28,11 @@ export async function GET(request: Request) {
     const error = url.searchParams.get('error') || ''
     const errorDescription = url.searchParams.get('error_description') || ''
 
+    const origin = url.origin
+    const redirectUri = process.env.ZOOM_REDIRECT_URI || `${origin}/api/zoom/callback`
+
     console.log('[Zoom Callback] Code:', code)
-    console.log('[Zoom Callback] Redirect URI:', ZOOM_REDIRECT_URI)
+    console.log('[Zoom Callback] Redirect URI:', redirectUri)
 
     if (error) {
       console.error('[Zoom OAuth Error]', error, errorDescription)
@@ -71,7 +74,7 @@ export async function GET(request: Request) {
       }
     }
 
-    await completeZoomOAuthConnection(userId, code, ZOOM_REDIRECT_URI)
+    await completeZoomOAuthConnection(userId, code, redirectUri)
 
     const target = new URL('/dashboard/settings', request.url)
     target.searchParams.set('zoom', 'connected')

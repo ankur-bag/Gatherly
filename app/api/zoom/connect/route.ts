@@ -18,7 +18,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Zoom OAuth credentials are missing' }, { status: 400 })
     }
 
-    console.log('[Zoom Connect] Redirect URI:', ZOOM_REDIRECT_URI)
+    const origin = new URL(request.url).origin
+    const redirectUri = process.env.ZOOM_REDIRECT_URI || `${origin}/api/zoom/callback`
+
+    console.log('[Zoom Connect] Redirect URI:', redirectUri)
     if (ZOOM_OAUTH_SCOPES) {
       console.log('[Zoom Connect] Requested scopes:', ZOOM_OAUTH_SCOPES)
     } else {
@@ -31,7 +34,7 @@ export async function GET(request: Request) {
     const authorizeUrl = new URL('https://zoom.us/oauth/authorize')
     authorizeUrl.searchParams.set('response_type', 'code')
     authorizeUrl.searchParams.set('client_id', clientId)
-    authorizeUrl.searchParams.set('redirect_uri', ZOOM_REDIRECT_URI)
+    authorizeUrl.searchParams.set('redirect_uri', redirectUri)
     authorizeUrl.searchParams.set('state', state)
     if (ZOOM_OAUTH_SCOPES) {
       authorizeUrl.searchParams.set('scope', ZOOM_OAUTH_SCOPES)
