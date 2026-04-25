@@ -4,9 +4,7 @@
   <img src="https://i.postimg.cc/Ssm246y8/Whats-App-Image-2026-04-25-at-6-35-55-PM.jpg" width="100%" />
 </p>
 
-<p align="center">
-<a href="https://goavo-avento.vercel.app/">Live Demo</a>
-</p>
+ Live Website: https://goavo-avento.vercel.app/
 
 Avento is a full-stack event management platform built with Next.js that enables organizers to create events, manage RSVPs, and seamlessly sync online events with Zoom.
 
