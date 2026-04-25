@@ -20,14 +20,14 @@ export default function UnderReview({
         Hi {attendeeName},
       </Text>
       <Text style={text}>
-        Thank you for your interest in <strong>{eventTitle}</strong>. We've received your registration and it's currently under review by the event organizer.
+        Thank you for your interest in <strong>{eventTitle}</strong>. We have received your registration and it is currently under review by the event organizer.
       </Text>
       
       <Section style={infoCard}>
         <Text style={infoLabel}>Status</Text>
         <Text style={infoValue}>Under Review</Text>
         <Text style={textSmall}>
-          We'll notify you as soon as a decision is made. Usually, this takes 24-48 hours.
+          We will notify you as soon as a decision is made. Usually, this takes 24-48 hours.
         </Text>
       </Section>
 
@@ -41,21 +41,23 @@ export default function UnderReview({
 const text = {
   fontSize: '16px',
   lineHeight: '26px',
-  color: '#484848',
+  color: '#4b463d',
 }
 
 const textSmall = {
   fontSize: '14px',
   lineHeight: '22px',
-  color: '#8A8A8A',
+  color: '#85786a',
 }
 
 const infoCard = {
-  backgroundColor: '#F8F8F7',
+  backgroundColor: '#fff8e7',
   padding: '24px',
-  borderRadius: '16px',
+  borderRadius: '18px',
   margin: '24px 0',
-  borderLeft: '4px solid #CCA000',
+  borderLeft: '4px solid #f59e0b',
+  border: '1px solid #f2dfb6',
+  boxShadow: '0 8px 24px rgba(31, 26, 20, 0.04)',
 }
 
 const infoLabel = {
@@ -63,13 +65,13 @@ const infoLabel = {
   fontWeight: 'bold',
   textTransform: 'uppercase' as const,
   letterSpacing: '0.1em',
-  color: '#8A8A8A',
+  color: '#9a8f80',
   margin: '0 0 4px',
 }
 
 const infoValue = {
   fontSize: '18px',
   fontWeight: 'bold',
-  color: '#1A1A1A',
+  color: '#1f1a14',
   margin: '0 0 12px',
 }

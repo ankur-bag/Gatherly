@@ -40,14 +40,16 @@ export default function Rejected({
 const text = {
   fontSize: '16px',
   lineHeight: '26px',
-  color: '#484848',
+  color: '#4b463d',
 }
 
 const infoCard = {
-  backgroundColor: '#F8F8F7',
+  backgroundColor: '#fff5f5',
   padding: '24px',
-  borderRadius: '16px',
+  borderRadius: '18px',
   margin: '24px 0',
+  border: '1px solid #f4caca',
+  boxShadow: '0 8px 24px rgba(31, 26, 20, 0.04)',
 }
 
 const infoLabel = {
@@ -55,13 +57,13 @@ const infoLabel = {
   fontWeight: 'bold',
   textTransform: 'uppercase' as const,
   letterSpacing: '0.1em',
-  color: '#8A8A8A',
+  color: '#9a8f80',
   margin: '0 0 4px',
 }
 
 const infoValue = {
   fontSize: '18px',
   fontWeight: 'bold',
-  color: '#1A1A1A',
+  color: '#1f1a14',
   margin: '0 0 16px',
 }

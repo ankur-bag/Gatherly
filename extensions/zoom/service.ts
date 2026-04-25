@@ -90,6 +90,16 @@ async function fetchZoomUserInfo(accessToken: string): Promise<ZoomUserInfo> {
   return (await res.json()) as ZoomUserInfo
 }
 
+async function fetchZoomUserInfoSafely(accessToken: string): Promise<ZoomUserInfo | null> {
+  try {
+    return await fetchZoomUserInfo(accessToken)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.warn('[Zoom] Skipping account details lookup:', message)
+    return null
+  }
+}
+
 function classifyRefreshFailure(message: string): 'expired' | 'revoked' {
   const normalized = message.toLowerCase()
   if (normalized.includes('invalid_grant') || normalized.includes('revoked') || normalized.includes('refresh token')) {
@@ -124,7 +134,7 @@ export async function completeZoomOAuthConnection(clerkId: string, code: string,
     throw new Error('Zoom token response missing access_token')
   }
   const expiresIn = tokenData.expires_in ?? 3600
-  const userInfo = await fetchZoomUserInfo(accessToken)
+  const userInfo = await fetchZoomUserInfoSafely(accessToken)
 
   const user = await loadZoomUser(clerkId)
   user.zoomConnected = true
@@ -132,8 +142,8 @@ export async function completeZoomOAuthConnection(clerkId: string, code: string,
   user.zoomAccessToken = accessToken
   user.zoomRefreshToken = refreshToken
   user.zoomTokenExpiry = new Date(Date.now() + expiresIn * 1000)
-  user.zoomEmail = userInfo.email || user.zoomEmail
-  user.zoomDisplayName = userInfo.display_name || user.zoomDisplayName
+  user.zoomEmail = userInfo?.email || user.zoomEmail
+  user.zoomDisplayName = userInfo?.display_name || user.zoomDisplayName
   user.zoomError = null
   user.zoomLastError = null
   await user.save()

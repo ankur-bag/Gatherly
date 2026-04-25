@@ -4,7 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { EVENT_TEMPLATES } from '@/lib/utils'
 import { RegistrationMode } from '@/types'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FiSave, FiMapPin, FiArrowLeft, FiInfo, FiCpu, FiCheck, FiX, FiRefreshCw } from 'react-icons/fi'
 import Link from 'next/link'
 
@@ -58,6 +58,8 @@ export function DashboardEventCreatePageUI() {
   const [improvingDescription, setImprovingDescription] = useState(false)
   const [improveError, setImproveError] = useState('')
   const [pendingOriginalDescription, setPendingOriginalDescription] = useState<string | null>(null)
+  const [zoomSettingsLoaded, setZoomSettingsLoaded] = useState(false)
+  const [zoomConnected, setZoomConnected] = useState(false)
 
   const updateForm = <K extends keyof EventFormState>(
     field: K,
@@ -65,6 +67,32 @@ export function DashboardEventCreatePageUI() {
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
+
+  useEffect(() => {
+    let isActive = true
+
+    async function loadZoomSettings() {
+      try {
+        const res = await fetch('/api/settings/zoom')
+        const data = await res.json()
+        if (!isActive) return
+        setZoomConnected(Boolean(data.connected))
+      } catch {
+        if (!isActive) return
+        setZoomConnected(false)
+      } finally {
+        if (isActive) {
+          setZoomSettingsLoaded(true)
+        }
+      }
+    }
+
+    loadZoomSettings()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const handleImproveDescription = async () => {
     const currentDescription = form.description.trim()
@@ -114,10 +142,15 @@ export function DashboardEventCreatePageUI() {
     setPendingOriginalDescription(null)
   }
 
-  const handleSubmit = async (e: React.FormEvent, status: 'draft' | 'published' = 'draft') => {
-    e.preventDefault()
+  const handleSubmit = async (status: 'draft' | 'published' = 'draft') => {
     setLoading(true)
     setError('')
+
+    if (status === 'published' && form.isOnline && (!zoomSettingsLoaded || !zoomConnected)) {
+      setError('Please connect Zoom from Settings before launching an online event.')
+      setLoading(false)
+      return
+    }
 
     try {
       const payload = {
@@ -150,6 +183,15 @@ export function DashboardEventCreatePageUI() {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const submitIfValid = (status: 'draft' | 'published') => {
+    const formElement = document.querySelector('form')
+    if (formElement?.checkValidity()) {
+      void handleSubmit(status)
+    } else {
+      formElement?.reportValidity()
     }
   }
 
@@ -340,6 +382,21 @@ export function DashboardEventCreatePageUI() {
                 />
               </div>
             )}
+
+            {form.isOnline && zoomSettingsLoaded && !zoomConnected && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-medium text-amber-900 shadow-sm">
+                <p className="font-bold text-amber-950">Zoom is not connected yet.</p>
+                <p className="mt-1 text-amber-900/80">
+                  Connect Zoom in Settings before launching an online event so the meeting link can be generated automatically.
+                </p>
+                <Link
+                  href="/dashboard/settings"
+                  className="mt-3 inline-flex h-10 items-center rounded-xl bg-charcoal px-4 text-xs font-bold text-white transition-colors hover:bg-orange"
+                >
+                  Go to Settings
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Section 3: Capacity & Registration */}
@@ -392,12 +449,7 @@ export function DashboardEventCreatePageUI() {
             <button
               type="button"
               onClick={() => {
-                const formElement = document.querySelector('form');
-                if (formElement?.checkValidity()) {
-                  handleSubmit({ preventDefault: () => {} } as any, 'draft');
-                } else {
-                  formElement?.reportValidity();
-                }
+                submitIfValid('draft')
               }}
               disabled={loading}
               className="flex-1 h-14 cursor-pointer bg-white border border-charcoal/10 text-charcoal rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-charcoal/2 transition-all disabled:opacity-50"
@@ -412,17 +464,12 @@ export function DashboardEventCreatePageUI() {
             <button
               type="button"
               onClick={() => {
-                const formElement = document.querySelector('form');
-                if (formElement?.checkValidity()) {
-                  handleSubmit({ preventDefault: () => {} } as any, 'published');
-                } else {
-                  formElement?.reportValidity();
-                }
+                submitIfValid('published')
               }}
-              disabled={loading}
+              disabled={loading || (form.isOnline && (!zoomSettingsLoaded || !zoomConnected))}
               className="flex-[1.5] h-14 bg-charcoal cursor-pointer text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:bg-orange transition-all disabled:opacity-50 group"
             >
-              {loading ? 'Launching...' : (
+              {loading ? 'Launching...' : form.isOnline && zoomSettingsLoaded && !zoomConnected ? 'Connect Zoom First' : (
                 <>
                   <FiInfo size={18} className="group-hover:rotate-12 transition-transform" />
                   Launch Event

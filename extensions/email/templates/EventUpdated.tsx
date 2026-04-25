@@ -1,6 +1,6 @@
 import * as React from 'react'
 import BaseLayout from './BaseLayout'
-import { Text, Section, Link } from '@react-email/components'
+import { Text, Section } from '@react-email/components'
 
 interface EventUpdatedProps {
   eventTitle: string
@@ -20,7 +20,7 @@ export default function EventUpdated({
         Hi,
       </Text>
       <Text style={text}>
-        There have been some changes to the event <strong>{eventTitle}</strong> that you're registered for.
+        There have been some changes to the event <strong>{eventTitle}</strong> that you are registered for.
       </Text>
       
       <Section style={infoCard}>
@@ -45,15 +45,17 @@ export default function EventUpdated({
 const text = {
   fontSize: '16px',
   lineHeight: '26px',
-  color: '#484848',
+  color: '#4b463d',
 }
 
 const infoCard = {
-  backgroundColor: '#FFF4EB',
+  backgroundColor: '#fff7ed',
   padding: '24px',
-  borderRadius: '16px',
+  borderRadius: '18px',
   margin: '24px 0',
-  borderLeft: '4px solid #FF6B00',
+  borderLeft: '4px solid #f97316',
+  border: '1px solid #fed7aa',
+  boxShadow: '0 8px 24px rgba(31, 26, 20, 0.04)',
 }
 
 const infoLabel = {
@@ -61,19 +63,19 @@ const infoLabel = {
   fontWeight: 'bold',
   textTransform: 'uppercase' as const,
   letterSpacing: '0.1em',
-  color: '#FF6B00',
+  color: '#f97316',
   margin: '0 0 12px',
 }
 
 const list = {
   margin: '0',
   padding: '0 0 0 20px',
-  color: '#1A1A1A',
+  color: '#1f1a14',
 }
 
 const listItem = {
   fontSize: '16px',
-  fontWeight: 'bold',
+  fontWeight: '600',
   marginBottom: '8px',
 }
 

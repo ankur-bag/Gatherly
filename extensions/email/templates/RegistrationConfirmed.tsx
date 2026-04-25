@@ -17,14 +17,14 @@ export default function RegistrationConfirmed({
 }: RegistrationConfirmedProps) {
   return (
     <BaseLayout 
-      previewText={`Success! You're registered for ${eventTitle}`}
-      title="You're Registered!"
+      previewText={`Success! Registration confirmed for ${eventTitle}`}
+      title="Registration Confirmed"
     >
       <Text style={text}>
         Hi {attendeeName},
       </Text>
       <Text style={text}>
-        Your registration for <strong>{eventTitle}</strong> is confirmed. We've saved a spot for you!
+        Your registration for <strong>{eventTitle}</strong> is confirmed. We have saved a spot for you.
       </Text>
       
       <Section style={infoCard}>
@@ -64,14 +64,16 @@ export default function RegistrationConfirmed({
 const text = {
   fontSize: '16px',
   lineHeight: '26px',
-  color: '#484848',
+  color: '#4b463d',
 }
 
 const infoCard = {
-  backgroundColor: '#F8F8F7',
+  backgroundColor: '#fbf8f1',
   padding: '24px',
-  borderRadius: '16px',
+  borderRadius: '18px',
   margin: '24px 0',
+  border: '1px solid #e7ddd0',
+  boxShadow: '0 8px 24px rgba(31, 26, 20, 0.04)',
 }
 
 const infoLabel = {
@@ -79,27 +81,28 @@ const infoLabel = {
   fontWeight: 'bold',
   textTransform: 'uppercase' as const,
   letterSpacing: '0.1em',
-  color: '#8A8A8A',
+  color: '#9a8f80',
   margin: '0 0 4px',
 }
 
 const infoValue = {
   fontSize: '18px',
   fontWeight: 'bold',
-  color: '#1A1A1A',
+  color: '#1f1a14',
   margin: '0 0 16px',
 }
 
 const linkStyle = {
-  color: '#3b7fd9',
+  color: '#c2410c',
+  textDecoration: 'none',
 }
 
 const joinButton = {
-  backgroundColor: '#2563a8',
+  backgroundColor: '#1f1a14',
   color: '#ffffff',
-  padding: '12px 24px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
+  padding: '14px 24px',
+  borderRadius: '12px',
+  fontWeight: '800',
   fontSize: '14px',
   textDecoration: 'none',
   display: 'inline-block',

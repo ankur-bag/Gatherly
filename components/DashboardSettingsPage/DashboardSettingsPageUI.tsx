@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { FiAlertCircle, FiCheck, FiRefreshCw, FiSettings, FiVideo, FiArrowLeft } from 'react-icons/fi'
+import { FiAlertCircle, FiCheck, FiRefreshCw, FiVideo, FiArrowLeft } from 'react-icons/fi'
 
 export function DashboardSettingsPageUI() {
   const { isLoaded } = useAuth()
@@ -21,36 +21,45 @@ export function DashboardSettingsPageUI() {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState('')
-
-  async function loadZoomSettings() {
-    try {
-      const res = await fetch('/api/settings/zoom')
-      const data = await res.json()
-      setZoomConnected(Boolean(data.connected))
-      setZoomStatus(data.status || 'disconnected')
-      setZoomEmail(data.zoomEmail || '')
-      setZoomDisplayName(data.zoomDisplayName || '')
-      setZoomTokenExpiry(data.zoomTokenExpiry || '')
-      setZoomError(data.zoomError || '')
-      setZoomLastError(data.zoomLastError || '')
-    } catch {
-      setError('Failed to fetch settings')
-    } finally {
-      setLoading(false)
+  const zoomSearchMessage = (() => {
+    const zoomParam = searchParams.get('zoom')
+    if (zoomParam === 'error' || zoomParam === 'failed') {
+      return searchParams.get('message') || 'Zoom connection failed'
     }
-  }
+    return ''
+  })()
 
   useEffect(() => {
     if (!isLoaded) return
-    loadZoomSettings()
-  }, [isLoaded])
 
-  useEffect(() => {
-    const zoomParam = searchParams.get('zoom')
-    if (zoomParam === 'error' || zoomParam === 'failed') {
-      setError(searchParams.get('message') || 'Zoom connection failed')
+    let isActive = true
+
+    void (async () => {
+      try {
+        const res = await fetch('/api/settings/zoom')
+        const data = await res.json()
+        if (!isActive) return
+        setZoomConnected(Boolean(data.connected))
+        setZoomStatus(data.status || 'disconnected')
+        setZoomEmail(data.zoomEmail || '')
+        setZoomDisplayName(data.zoomDisplayName || '')
+        setZoomTokenExpiry(data.zoomTokenExpiry || '')
+        setZoomError(data.zoomError || '')
+        setZoomLastError(data.zoomLastError || '')
+      } catch {
+        if (!isActive) return
+        setError('Failed to fetch settings')
+      } finally {
+        if (isActive) {
+          setLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isActive = false
     }
-  }, [searchParams])
+  }, [isLoaded])
 
   function handleZoomConnect() {
     window.location.href = '/api/zoom/connect'
@@ -123,13 +132,13 @@ export function DashboardSettingsPageUI() {
 
         <div className="flex flex-col gap-2">
           <h1 className="text-charcoal leading-none mb-1">General Settings</h1>
-          <p className="text-base text-charcoal/40 font-medium">Manage your platform integrations and organizer profile</p>
+          <p className="text-base text-charcoal/40 font-medium">Manage your Zoom integration and event sync settings</p>
         </div>
 
-        {error && (
+        {(error || zoomSearchMessage) && (
           <div className="flex items-center gap-3 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-500 border border-red-100">
             <FiAlertCircle size={18} />
-            {error}
+            {error || zoomSearchMessage}
           </div>
         )}
 
@@ -238,21 +247,6 @@ export function DashboardSettingsPageUI() {
           </div>
         </div>
 
-        {/* Global Settings Stub */}
-        <div className="bento-card flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-none translate-y-0">
-           <div className="flex items-center gap-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-charcoal/5 text-charcoal/30">
-                 <FiSettings size={28} />
-              </div>
-              <div>
-                 <h3 className="text-xl font-bold text-charcoal" style={{ fontFamily: 'var(--font-sans)' }}>Organizer Profile</h3>
-                 <p className="text-sm text-charcoal/40 font-medium">Identity and security managed via Clerk</p>
-              </div>
-           </div>
-           <button className="h-12 px-6 rounded-xl glass border-black/5 text-charcoal/60 font-bold text-xs flex items-center gap-2 cursor-not-allowed">
-              Managed by Provider
-           </button>
-        </div>
       </div>
     </DashboardLayout>
   )

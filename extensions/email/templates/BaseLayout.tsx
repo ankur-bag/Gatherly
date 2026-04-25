@@ -7,8 +7,6 @@ import {
   Container,
   Preview,
   Section,
-  Row,
-  Column,
   Hr,
 } from '@react-email/components'
 import * as React from 'react'
@@ -19,8 +17,6 @@ interface BaseLayoutProps {
   children: React.ReactNode
   footerText?: string
 }
-
-const BASE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
 
 export default function BaseLayout({
   previewText,
@@ -34,27 +30,25 @@ export default function BaseLayout({
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
+          <Section style={topAccent} />
+
           <Section style={header}>
-            <Row style={logoRow}>
-              <Column style={logoColumn}>
-                <Text style={logoText}>AVENTO</Text>
-              </Column>
-            </Row>
+            <Text style={brandPill}>AVENTO</Text>
+            <Text style={eyebrow}>Event management made lighter</Text>
           </Section>
-          
+
           <Section style={contentBox}>
-             <Heading style={heading}>{title}</Heading>
-             {children}
+            <Heading style={heading}>{title}</Heading>
+            <Section style={divider} />
+            {children}
           </Section>
 
           <Section style={footer}>
             <Text style={footerContent}>
-              {footerText || "You received this email because you registered for an event on Avento."}
+              {footerText || 'You received this email because you registered for an event on Avento.'}
             </Text>
             <Hr style={hr} />
-            <Text style={copyright}>
-              © 2026 Avento. All rights reserved.
-            </Text>
+            <Text style={copyright}>© 2026 Avento. All rights reserved.</Text>
           </Section>
         </Container>
       </Body>
@@ -63,88 +57,93 @@ export default function BaseLayout({
 }
 
 const main = {
-  backgroundColor: '#F8F8F7',
+  backgroundColor: '#f4efe8',
   fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
 }
 
 const container = {
-  margin: '40px auto',
-  padding: '0 20px',
-  width: '580px',
+  margin: '24px auto',
+  padding: '0 20px 20px',
+  width: '640px',
 }
 
 const header = {
-  padding: '30px 0',
+  padding: '28px 12px 18px',
   textAlign: 'center' as const,
 }
 
-const logoRow = {
-  margin: '0 auto',
-  width: 'fit-content',
+const topAccent = {
+  height: '8px',
+  borderRadius: '999px',
+  backgroundColor: '#f97316',
+  margin: '8px 0 20px',
 }
 
-const logoColumn = {
-  textAlign: 'center' as const,
+const brandPill = {
+  display: 'inline-block',
+  margin: '0 auto 8px',
+  padding: '10px 18px',
+  borderRadius: '999px',
+  backgroundColor: '#1f1a14',
+  color: '#ffffff',
+  fontSize: '18px',
+  fontWeight: '800',
+  letterSpacing: '0.22em',
 }
 
-const logoImage = {
-  display: 'block',
-  margin: '0 auto',
-}
-
-const logoText = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: '#1A1A1A',
-  letterSpacing: '0.2em',
+const eyebrow = {
   margin: '0',
+  color: '#8b7763',
+  fontSize: '12px',
+  fontWeight: '700',
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase' as const,
   textAlign: 'center' as const,
 }
 
-const logo = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: '#1A1A1A',
-  letterSpacing: '0.2em',
-  margin: '0',
+const divider = {
+  height: '1px',
+  backgroundColor: '#eadfce',
+  margin: '0 0 28px',
 }
 
 const contentBox = {
   backgroundColor: '#ffffff',
-  padding: '40px',
-  borderRadius: '24px',
-  border: '1px solid #E5E5E5',
+  padding: '36px',
+  borderRadius: '28px',
+  border: '1px solid #e7ddd0',
+  boxShadow: '0 18px 40px rgba(31, 26, 20, 0.08)',
 }
 
 const heading = {
-  fontSize: '32px',
-  lineHeight: '1.2',
-  fontWeight: 'bold',
-  color: '#1A1A1A',
+  fontSize: '34px',
+  lineHeight: '1.1',
+  fontWeight: '800',
+  color: '#1f1a14',
   textAlign: 'left' as const,
-  margin: '0 0 30px',
-  letterSpacing: '-0.02em',
+  margin: '0',
+  letterSpacing: '-0.03em',
 }
 
 const footer = {
-  padding: '40px 0',
+  padding: '28px 12px 0',
   textAlign: 'center' as const,
 }
 
 const footerContent = {
-  fontSize: '12px',
-  color: '#8A8A8A',
+  fontSize: '13px',
+  color: '#85786a',
   lineHeight: '1.6',
 }
 
 const hr = {
-  borderColor: '#E5E5E5',
-  margin: '20px 0',
+  borderColor: '#e7ddd0',
+  margin: '20px 0 14px',
 }
 
 const copyright = {
   fontSize: '10px',
-  color: '#B0B0B0',
+  color: '#a89a8b',
   textTransform: 'uppercase' as const,
-  letterSpacing: '0.1em',
+  letterSpacing: '0.16em',
 }
