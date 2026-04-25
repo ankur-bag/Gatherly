@@ -14,13 +14,24 @@ const display = Instrument_Serif({
   variable: "--font-display",
 });
 
+import type { Viewport } from "next";
+
 export const metadata: Metadata = {
-  title: "Avento — Event Management Platform",
+  title: {
+    default: "Avento — High-Fidelity Event Management",
+    template: "%s | Avento"
+  },
   description:
-    "Connects every step from RSVP to revenue, delivering clear reports and next-best actions to improve ROI by 20-35%",
+    "A powerful event management platform where organizers create, manage, and scale events with precision. Bridge physical and digital experiences seamlessly.",
   icons: {
     icon: "/avento.svg",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 import { ToastProvider } from "@/components/ui/Toast";
