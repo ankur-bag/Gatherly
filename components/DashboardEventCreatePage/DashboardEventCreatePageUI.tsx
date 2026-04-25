@@ -142,7 +142,12 @@ export function DashboardEventCreatePageUI() {
     setPendingOriginalDescription(null)
   }
 
-  const handleSubmit = async (status: 'draft' | 'published' = 'draft') => {
+  const handleSubmit = async (statusOrEvent: 'draft' | 'published' | React.FormEvent = 'draft') => {
+    if (typeof statusOrEvent !== 'string') {
+      statusOrEvent.preventDefault()
+    }
+    const status = typeof statusOrEvent === 'string' ? statusOrEvent : 'draft'
+
     setLoading(true)
     setError('')
 

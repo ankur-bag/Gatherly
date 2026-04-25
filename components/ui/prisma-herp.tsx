@@ -147,32 +147,32 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
         </nav>
 
         {/* Top-left description */}
-        <div className="absolute top-24 left-4 sm:left-6 md:left-10 max-w-sm sm:max-w-md md:max-w-lg z-20">
+        <div className="absolute top-20 left-4 sm:top-24 sm:left-8 md:left-10 max-w-[280px] sm:max-w-md md:max-w-lg z-20">
           <motion.p
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="text-sm text-white/90 sm:text-lg md:text-2xl "
-            style={{ lineHeight: 1.2 ,fontFamily: "var(--font-display)" }}
+            className="text-[10px] text-white/90 sm:text-lg md:text-2xl leading-tight"
+            style={{ fontFamily: "var(--font-display)" }}
           >
             Avento is a powerful event management platform where organizers create, manage, and scale events with precision. Bridge physical and digital experiences seamlessly with built-in Zoom integration and total control.
           </motion.p>
         </div>
 
         {/* Hero content */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-2 sm:px-6 md:px-10">
-          <div className="grid grid-cols-12 items-end gap-4">
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 sm:px-8 sm:pb-8 md:px-10 md:pb-10">
+          <div className="grid grid-cols-12 items-end gap-4 lg:gap-8">
             
             <div className="col-span-12 lg:col-span-8">
               <h1
-                className="font-medium leading-[0.85] tracking-[-0.07em] text-[26vw] sm:text-[24vw] md:text-[22vw] lg:text-[20vw] xl:text-[19vw] 2xl:text-[20vw]"
+                className="font-medium leading-[0.8] tracking-[-0.07em] text-[24vw] sm:text-[22vw] md:text-[20vw] lg:text-[18vw]"
                 style={{ color: "#E1E0CC" }}
               >
                 <WordsPullUp text="Avento" showAsterisk />
               </h1>
             </div>
 
-            <div className="col-span-12 flex flex-col gap-5 pb-6 lg:col-span-4 lg:pb-10">
+            <div className="col-span-12 flex flex-col gap-6 lg:col-span-4 lg:pb-10">
 
               {isSignedIn ? (
                 <motion.div
@@ -180,10 +180,10 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <Link href="/dashboard" className="group inline-flex items-center gap-3 self-start rounded-full bg-primary py-2 pl-6 pr-2 text-base  text-white transition-all hover:gap-4 sm:text-lg md:text-3xl" style={{ fontFamily: "var(--font-display)" }}>
+                  <Link href="/dashboard" className="group inline-flex items-center gap-3 self-start rounded-full bg-primary py-2 pl-5 pr-1.5 text-sm text-white transition-all hover:gap-4 sm:py-3 sm:pl-7 sm:pr-2 sm:text-lg md:text-3xl" style={{ fontFamily: "var(--font-display)" }}>
                     Launch Your First Event
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:h-12 sm:w-12">
-                      <ArrowRight className="h-5 w-5 cursor-pointer" style={{ color: "#E1E0CC" }} />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:h-12 sm:w-12">
+                      <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6 cursor-pointer" style={{ color: "#E1E0CC" }} />
                     </span>
                   </Link>
                 </motion.div>
@@ -194,10 +194,10 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
                   transition={{ duration: 0.8, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <SignUpButton mode="modal">
-                    <button className="group inline-flex items-center gap-3 self-start rounded-full bg-primary py-2 pl-6 pr-2 text-base  text-white transition-all hover:gap-4 sm:text-lg md:text-xl" style={{ fontFamily: "var(--font-display)" }}>
+                    <button className="group inline-flex items-center gap-3 self-start rounded-full bg-primary py-2 pl-5 pr-1.5 text-sm text-white transition-all hover:gap-4 sm:py-3 sm:pl-7 sm:pr-2 sm:text-lg md:text-xl" style={{ fontFamily: "var(--font-display)" }}>
                       Launch Your First Event
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:h-12 sm:w-12">
-                        <ArrowRight className="h-5 w-5 cursor-pointer" style={{ color: "#E1E0CC" }} />
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black transition-transform group-hover:scale-110 sm:h-12 sm:w-12">
+                        <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6 cursor-pointer" style={{ color: "#E1E0CC" }} />
                       </span>
                     </button>
                   </SignUpButton>
@@ -208,14 +208,14 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-6"
+                className="mt-2 flex flex-col gap-3 sm:gap-4 border-t border-white/10 pt-6"
               >
                 {trustPoints.map((point, idx) => (
-                  <div key={idx} className="flex items-start gap-4">
-                    <point.Icon className="mt-1 shrink-0 text-[#E1E0CC]" size={20} />
+                  <div key={idx} className="flex items-start gap-3 sm:gap-4">
+                    <point.Icon className="mt-1 shrink-0 text-[#E1E0CC] size-4 sm:size-5" />
                     <div>
-                      <h4 className="text-sm sm:text-base font-semibold text-[#E1E0CC]">{point.title}</h4>
-                      <p className="text-xs sm:text-sm text-[#E1E0CC]/70">{point.description}</p>
+                      <h4 className="text-xs sm:text-base font-semibold text-[#E1E0CC]">{point.title}</h4>
+                      <p className="text-[10px] sm:text-sm text-[#E1E0CC]/70">{point.description}</p>
                     </div>
                   </div>
                 ))}
