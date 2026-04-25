@@ -1,6 +1,7 @@
 import { dbConnect } from '@/lib/mongodb'
 import User from '@/models/User'
 import { IUser } from '@/types'
+import type { ZoomConnectionStatus } from '@/models/User'
 
 export async function syncOrGet(clerkId: string, { name, email }: { name: string; email: string }): Promise<IUser> {
   await dbConnect()
@@ -52,6 +53,79 @@ export async function updateSettings(
   }
 
   const user = await User.findOneAndUpdate({ clerkId }, updateData, { returnDocument: 'after' })
+  if (!user) {
+    throw new Error('Not found')
+  }
+
+  return user.toObject()
+}
+
+type ZoomConnectionUpdate = {
+  zoomConnected: boolean
+  zoomConnectionStatus: ZoomConnectionStatus
+  zoomAccessToken?: string | null
+  zoomRefreshToken?: string | null
+  zoomTokenExpiry?: Date | null
+  zoomEmail?: string | null
+  zoomDisplayName?: string | null
+  zoomError?: string | null
+  zoomLastError?: string | null
+}
+
+export async function updateZoomConnection(clerkId: string, update: ZoomConnectionUpdate): Promise<IUser> {
+  await dbConnect()
+
+  const user = await User.findOneAndUpdate(
+    { clerkId },
+    {
+      $set: {
+        zoomConnected: update.zoomConnected,
+        zoomConnectionStatus: update.zoomConnectionStatus,
+        zoomAccessToken: update.zoomAccessToken ?? null,
+        zoomRefreshToken: update.zoomRefreshToken ?? null,
+        zoomTokenExpiry: update.zoomTokenExpiry ?? null,
+        zoomEmail: update.zoomEmail ?? null,
+        zoomDisplayName: update.zoomDisplayName ?? null,
+        zoomError: update.zoomError ?? null,
+        zoomLastError: update.zoomLastError ?? null,
+      },
+    },
+    { returnDocument: 'after' }
+  )
+
+  if (!user) {
+    throw new Error('Not found')
+  }
+
+  return user.toObject()
+}
+
+export async function clearZoomConnection(clerkId: string): Promise<IUser> {
+  await dbConnect()
+
+  const user = await User.findOneAndUpdate(
+    { clerkId },
+    {
+      $set: {
+        zoomConnected: false,
+        zoomConnectionStatus: 'disconnected',
+        zoomLastError: null,
+      },
+      $unset: {
+        zoomAccessToken: 1,
+        zoomRefreshToken: 1,
+        zoomTokenExpiry: 1,
+        zoomEmail: 1,
+        zoomDisplayName: 1,
+        zoomError: 1,
+        zoomAccountId: 1,
+        zoomClientId: 1,
+        zoomClientSecret: 1,
+      },
+    },
+    { returnDocument: 'after' }
+  )
+
   if (!user) {
     throw new Error('Not found')
   }

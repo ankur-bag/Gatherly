@@ -1,112 +1,214 @@
-import { IUser, IEvent } from '@/types'
+import { dbConnect } from '@/lib/mongodb'
+import User from '@/models/User'
+import { IEvent, IUser } from '@/types'
 
-type ZoomCredentials = {
-  accountId: string
-  clientId: string
-  clientSecret: string
+type ZoomOAuthTokenResponse = {
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
 }
 
-type TokenCacheEntry = {
-  token: string
-  expiresAt: number
+type ZoomUserInfo = {
+  email?: string
+  display_name?: string
 }
 
-const tokenCache = new Map<string, TokenCacheEntry>()
+function getZoomClientCredentials() {
+  const clientId = process.env.ZOOM_CLIENT_ID || ''
+  const clientSecret = process.env.ZOOM_CLIENT_SECRET || ''
 
-function credentialsKey(credentials: ZoomCredentials): string {
-  return `${credentials.accountId}:${credentials.clientId}`
+  if (!clientId || !clientSecret) {
+    throw new Error('Zoom OAuth credentials are missing. Set ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET.')
+  }
+
+  return { clientId, clientSecret }
 }
 
-function buildCredentialCandidates(organizer?: IUser): ZoomCredentials[] {
-  const candidates: ZoomCredentials[] = []
-
-  const organizerCredentials: ZoomCredentials = {
-    accountId: organizer?.zoomAccountId || '',
-    clientId: organizer?.zoomClientId || '',
-    clientSecret: organizer?.zoomClientSecret || '',
-  }
-
-  const envCredentials: ZoomCredentials = {
-    accountId: process.env.ZOOM_ACCOUNT_ID || '',
-    clientId: process.env.ZOOM_CLIENT_ID || '',
-    clientSecret: process.env.ZOOM_CLIENT_SECRET || '',
-  }
-
-  if (organizerCredentials.accountId && organizerCredentials.clientId && organizerCredentials.clientSecret) {
-    candidates.push(organizerCredentials)
-  }
-
-  if (envCredentials.accountId && envCredentials.clientId && envCredentials.clientSecret) {
-    const isDifferentFromOrganizer =
-      envCredentials.accountId !== organizerCredentials.accountId ||
-      envCredentials.clientId !== organizerCredentials.clientId ||
-      envCredentials.clientSecret !== organizerCredentials.clientSecret
-    if (!candidates.length || isDifferentFromOrganizer) {
-      candidates.push(envCredentials)
-    }
-  }
-
-  return candidates
+function basicAuthHeader(clientId: string, clientSecret: string): string {
+  return `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
 }
 
-async function requestAccessToken(credentials: ZoomCredentials): Promise<string> {
-  const now = Date.now()
-  const cacheKey = credentialsKey(credentials)
-  const cached = tokenCache.get(cacheKey)
+async function requestTokenResponse(params: {
+  grantType: 'authorization_code' | 'refresh_token'
+  code?: string
+  refreshToken?: string
+  redirectUri?: string
+}): Promise<ZoomOAuthTokenResponse> {
+  const { clientId, clientSecret } = getZoomClientCredentials()
 
-  if (cached && now < cached.expiresAt) {
-    return cached.token
+  const body = new URLSearchParams({ grant_type: params.grantType })
+  if (params.code) {
+    body.set('code', params.code)
+  }
+  if (params.refreshToken) {
+    body.set('refresh_token', params.refreshToken)
+  }
+  if (params.redirectUri) {
+    body.set('redirect_uri', params.redirectUri)
   }
 
-  const url = new URL('https://zoom.us/oauth/token')
-  url.searchParams.append('grant_type', 'account_credentials')
-  url.searchParams.append('account_id', credentials.accountId)
-
-  const res = await fetch(url.toString(), {
+  const res = await fetch('https://zoom.us/oauth/token', {
     method: 'POST',
     headers: {
-      Authorization: `Basic ${Buffer.from(`${credentials.clientId}:${credentials.clientSecret}`).toString('base64')}`,
+      Authorization: basicAuthHeader(clientId, clientSecret),
       'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body,
+    cache: 'no-store',
+  })
+
+  const data = (await res.json().catch(() => ({}))) as ZoomOAuthTokenResponse & {
+    error?: string
+    error_description?: string
+  }
+
+  if (!res.ok) {
+    const message = data.error_description || data.error || `Status ${res.status}`
+    throw new Error(`Failed to fetch Zoom token (${res.status}): ${message}`)
+  }
+
+  if (!data.access_token) {
+    throw new Error('Zoom token response missing access_token')
+  }
+
+  return data
+}
+
+async function fetchZoomUserInfo(accessToken: string): Promise<ZoomUserInfo> {
+  const res = await fetch('https://api.zoom.us/v2/users/me', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
     },
     cache: 'no-store',
   })
 
   if (!res.ok) {
     const errorBody = await res.text()
-    throw new Error(`Failed to fetch Zoom access token (${res.status}): ${errorBody}`)
+    throw new Error(`Failed to fetch Zoom account details (${res.status}): ${errorBody}`)
   }
 
-  const data = (await res.json()) as { access_token?: string; expires_in?: number }
-  if (!data.access_token) {
-    throw new Error('Zoom token response missing access_token')
-  }
-
-  const expiresIn = data.expires_in ?? 3600
-  tokenCache.set(cacheKey, {
-    token: data.access_token,
-    expiresAt: now + Math.max(expiresIn - 60, 60) * 1000,
-  })
-
-  return data.access_token
+  return (await res.json()) as ZoomUserInfo
 }
 
-export async function getAccessToken(organizer?: IUser): Promise<string> {
-  const candidates = buildCredentialCandidates(organizer)
-  if (!candidates.length) {
-    throw new Error('Missing Zoom credentials. Set Zoom credentials in Settings or environment variables.')
+function classifyRefreshFailure(message: string): 'expired' | 'revoked' {
+  const normalized = message.toLowerCase()
+  if (normalized.includes('invalid_grant') || normalized.includes('revoked') || normalized.includes('refresh token')) {
+    return 'revoked'
+  }
+  return 'expired'
+}
+
+async function loadZoomUser(clerkId: string) {
+  await dbConnect()
+  const user = await User.findOne({ clerkId })
+  if (!user) {
+    throw new Error('Not found')
+  }
+  return user
+}
+
+export async function completeZoomOAuthConnection(clerkId: string, code: string, redirectUri: string): Promise<IUser> {
+  const tokenData = await requestTokenResponse({
+    grantType: 'authorization_code',
+    code,
+    redirectUri,
+  })
+
+  if (!tokenData.refresh_token) {
+    throw new Error('Zoom token response missing refresh_token')
   }
 
-  const failures: string[] = []
-  for (const candidate of candidates) {
-    try {
-      return await requestAccessToken(candidate)
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : 'Unknown error'
-      failures.push(reason)
+  const accessToken = tokenData.access_token
+  const refreshToken = tokenData.refresh_token
+  if (!accessToken) {
+    throw new Error('Zoom token response missing access_token')
+  }
+  const expiresIn = tokenData.expires_in ?? 3600
+  const userInfo = await fetchZoomUserInfo(accessToken)
+
+  const user = await loadZoomUser(clerkId)
+  user.zoomConnected = true
+  user.zoomConnectionStatus = 'connected'
+  user.zoomAccessToken = accessToken
+  user.zoomRefreshToken = refreshToken
+  user.zoomTokenExpiry = new Date(Date.now() + expiresIn * 1000)
+  user.zoomEmail = userInfo.email || user.zoomEmail
+  user.zoomDisplayName = userInfo.display_name || user.zoomDisplayName
+  user.zoomError = null
+  user.zoomLastError = null
+  await user.save()
+
+  return user.toObject()
+}
+
+export async function getUserAccessToken(organizer?: IUser): Promise<string> {
+  if (!organizer?.clerkId) {
+    throw new Error('Zoom disconnected, please reconnect')
+  }
+
+  if (!organizer.zoomConnected) {
+    throw new Error('Zoom disconnected, please reconnect')
+  }
+
+  const hasValidAccessToken = Boolean(
+    organizer.zoomConnected &&
+      organizer.zoomAccessToken &&
+      organizer.zoomTokenExpiry &&
+      new Date(organizer.zoomTokenExpiry).getTime() > Date.now() + 60_000
+  )
+
+  if (hasValidAccessToken && organizer.zoomAccessToken) {
+    return organizer.zoomAccessToken
+  }
+
+  if (!organizer.zoomRefreshToken) {
+    throw new Error('Zoom disconnected, please reconnect')
+  }
+
+  const user = await loadZoomUser(organizer.clerkId)
+  user.zoomConnectionStatus = 'refreshing'
+  await user.save()
+
+  try {
+    const tokenData = await requestTokenResponse({
+      grantType: 'refresh_token',
+      refreshToken: organizer.zoomRefreshToken,
+    })
+
+    if (!tokenData.refresh_token) {
+      throw new Error('Zoom token response missing refresh_token')
     }
-  }
 
-  throw new Error(failures.join(' | '))
+    const refreshedAccessToken = tokenData.access_token
+    const refreshedRefreshToken = tokenData.refresh_token
+    if (!refreshedAccessToken) {
+      throw new Error('Zoom token response missing access_token')
+    }
+    const expiresIn = tokenData.expires_in ?? 3600
+
+    user.zoomConnected = true
+    user.zoomConnectionStatus = 'connected'
+    user.zoomAccessToken = refreshedAccessToken
+    user.zoomRefreshToken = refreshedRefreshToken
+    user.zoomTokenExpiry = new Date(Date.now() + expiresIn * 1000)
+    user.zoomError = null
+    user.zoomLastError = null
+    await user.save()
+
+    return refreshedAccessToken
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    user.zoomConnected = false
+    user.zoomConnectionStatus = classifyRefreshFailure(message)
+    user.zoomAccessToken = null
+    user.zoomRefreshToken = null
+    user.zoomTokenExpiry = null
+    user.zoomError = message
+    user.zoomLastError = message
+    await user.save()
+
+    throw new Error('Zoom disconnected, please reconnect')
+  }
 }
 
 // ─── Safe wrapper ─────────────────────────────────────────────────────────────
@@ -122,7 +224,10 @@ async function safeZoomCall<T>(fn: () => Promise<T>): Promise<T> {
 // ─── Meetings ─────────────────────────────────────────────────────────────────
 export async function createMeeting(event: IEvent, organizer?: IUser) {
   return safeZoomCall(async () => {
-    const token = await getAccessToken(organizer)
+    const token = await getUserAccessToken(organizer)
+    if (!token) {
+      throw new Error('Zoom access token unavailable')
+    }
 
     const res = await fetch('https://api.zoom.us/v2/users/me/meetings', {
       method: 'POST',
@@ -149,7 +254,7 @@ export async function createMeeting(event: IEvent, organizer?: IUser) {
 
 export async function updateMeeting(meetingId: string, event: IEvent, organizer?: IUser) {
   return safeZoomCall(async () => {
-    const token = await getAccessToken(organizer)
+    const token = await getUserAccessToken(organizer)
 
     const res = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}`, {
       method: 'PATCH',
@@ -172,7 +277,7 @@ export async function updateMeeting(meetingId: string, event: IEvent, organizer?
 
 export async function deleteMeeting(meetingId: string, organizer?: IUser) {
   return safeZoomCall(async () => {
-    const token = await getAccessToken(organizer)
+    const token = await getUserAccessToken(organizer)
 
     const res = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}`, {
       method: 'DELETE',
@@ -190,7 +295,7 @@ export async function deleteMeeting(meetingId: string, organizer?: IUser) {
 
 export async function endMeeting(meetingId: string, organizer?: IUser) {
   return safeZoomCall(async () => {
-    const token = await getAccessToken(organizer)
+    const token = await getUserAccessToken(organizer)
 
     const res = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}/status`, {
       method: 'PUT',

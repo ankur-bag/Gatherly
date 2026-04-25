@@ -8,6 +8,7 @@ export function registerZoomExtension() {
   // ───────────────────────────────────────────────────────────────────────────
   onHook('event.published', async ({ event, organizer }) => {
     if (!event.isOnline) return
+    if (!organizer?.zoomConnected) return
 
     // ✅ Idempotency guard: if meeting already exists, skip
     if (event.zoomMeetingId) {
@@ -59,6 +60,7 @@ export function registerZoomExtension() {
 
     // Only update Zoom if event is online and has a linked meeting
     if (!event.isOnline || !event.zoomMeetingId) return
+    if (!organizer?.zoomConnected) return
 
     const relevantFields = ['title', 'dateTime']
     const shouldUpdate = changedFields.some((f) => relevantFields.includes(f))

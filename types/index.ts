@@ -1,8 +1,8 @@
-import { IUser } from '@/models/User'
+import { IUser, ZoomConnectionStatus } from '@/models/User'
 import { IEvent, EventStatus, RegistrationMode, ZoomSyncStatus } from '@/models/Event'
 import { IRegistration, RegistrationStatus } from '@/models/Registration'
 
-export type { IUser, IEvent, IRegistration, EventStatus, RegistrationMode, RegistrationStatus, ZoomSyncStatus }
+export type { IUser, IEvent, IRegistration, EventStatus, RegistrationMode, RegistrationStatus, ZoomSyncStatus, ZoomConnectionStatus }
 
 export type PublicStatus = 'Open' | 'Full' | 'Closed' | 'Cancelled' | null
 

@@ -1,76 +1,102 @@
 'use client'
 
 import DashboardLayout from '@/components/DashboardLayout'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { ZoomSyncStatus } from '@/types'
+import { ZoomConnectionStatus } from '@/types'
 import { useAuth } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { FiAlertCircle, FiCheck, FiSettings, FiVideo, FiArrowLeft } from 'react-icons/fi'
+import { FiAlertCircle, FiCheck, FiRefreshCw, FiSettings, FiVideo, FiArrowLeft } from 'react-icons/fi'
 
 export function DashboardSettingsPageUI() {
   const { isLoaded } = useAuth()
-  const [zoomStatus, setZoomStatus] = useState<ZoomSyncStatus>('pending')
+  const searchParams = useSearchParams()
+  const [zoomConnected, setZoomConnected] = useState(false)
+  const [zoomStatus, setZoomStatus] = useState<ZoomConnectionStatus>('disconnected')
+  const [zoomEmail, setZoomEmail] = useState('')
+  const [zoomDisplayName, setZoomDisplayName] = useState('')
+  const [zoomTokenExpiry, setZoomTokenExpiry] = useState('')
+  const [zoomError, setZoomError] = useState('')
+  const [zoomLastError, setZoomLastError] = useState('')
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState('')
-  const [disconnectConfirm, setDisconnectConfirm] = useState(false)
+
+  async function loadZoomSettings() {
+    try {
+      const res = await fetch('/api/settings/zoom')
+      const data = await res.json()
+      setZoomConnected(Boolean(data.connected))
+      setZoomStatus(data.status || 'disconnected')
+      setZoomEmail(data.zoomEmail || '')
+      setZoomDisplayName(data.zoomDisplayName || '')
+      setZoomTokenExpiry(data.zoomTokenExpiry || '')
+      setZoomError(data.zoomError || '')
+      setZoomLastError(data.zoomLastError || '')
+    } catch {
+      setError('Failed to fetch settings')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isLoaded) return
-    async function checkZoom() {
-      try {
-        const res = await fetch('/api/settings/zoom')
-        const data = await res.json()
-        setZoomStatus(data.status || 'pending')
-      } catch {
-        setError('Failed to fetch settings')
-      } finally {
-        setLoading(false)
-      }
-    }
-    checkZoom()
+    loadZoomSettings()
   }, [isLoaded])
 
-  async function handleZoomConnect() {
+  useEffect(() => {
+    const zoomParam = searchParams.get('zoom')
+    if (zoomParam === 'error' || zoomParam === 'failed') {
+      setError(searchParams.get('message') || 'Zoom connection failed')
+    }
+  }, [searchParams])
+
+  function handleZoomConnect() {
+    window.location.href = '/api/zoom/connect'
+  }
+
+  async function handleZoomDisconnect() {
     setActionLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/settings/zoom', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'connect' }),
-      })
+      const res = await fetch('/api/zoom/disconnect', { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Connect failed')
-      setZoomStatus(data.status)
-    } catch (connectError) {
-      const message = connectError instanceof Error ? connectError.message : 'Failed to configure Zoom'
+      if (!res.ok) throw new Error(data.error || 'Disconnect failed')
+      setZoomConnected(Boolean(data.connected))
+      setZoomStatus(data.status || 'disconnected')
+      setZoomEmail(data.zoomEmail || '')
+      setZoomDisplayName(data.zoomDisplayName || '')
+      setZoomTokenExpiry(data.zoomTokenExpiry || '')
+      setZoomError(data.zoomError || '')
+      setZoomLastError(data.zoomLastError || '')
+    } catch (disconnectError) {
+      const message = disconnectError instanceof Error ? disconnectError.message : 'Failed to disconnect Zoom'
       setError(message)
     } finally {
       setActionLoading(false)
     }
   }
 
-  async function handleZoomDisconnect() {
-    setDisconnectConfirm(false)
-    setActionLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/api/settings/zoom', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'disconnect' }),
-      })
-      if (!res.ok) throw new Error('Disconnect failed')
-      const data = await res.json()
-      setZoomStatus(data.status)
-    } catch {
-      setError('Failed to reverse configurations')
-    } finally {
-      setActionLoading(false)
-    }
-  }
+  const showReconnect = zoomConnected || zoomStatus === 'expired' || zoomStatus === 'revoked'
+  const statusLabel = zoomStatus === 'refreshing'
+      ? 'Refreshing'
+      : zoomConnected
+        ? 'Linked'
+        : zoomStatus === 'expired' || zoomStatus === 'revoked'
+        ? 'Reconnect needed'
+        : 'Disconnected'
+
+  const statusTone = zoomStatus === 'refreshing'
+      ? 'yellow'
+      : zoomConnected
+        ? 'green'
+        : zoomStatus === 'expired' || zoomStatus === 'revoked'
+        ? 'red'
+        : 'gray'
+
+  const connectedAccountName = zoomDisplayName || 'Zoom Account'
+  const tokenExpiryLabel = zoomTokenExpiry ? new Date(zoomTokenExpiry).toLocaleString() : ''
 
   if (loading || !isLoaded) {
     return (
@@ -127,51 +153,86 @@ export function DashboardSettingsPageUI() {
               <div className="max-w-md space-y-4">
                 <div className="flex items-center gap-3">
                    <span className="text-xs font-bold uppercase tracking-widest text-charcoal/30">Network Status:</span>
-                   {zoomStatus === 'synced' ? (
+                   {statusTone === 'green' ? (
                      <div className="flex items-center gap-2 rounded-full bg-green-50 px-4 py-1.5 text-xs font-bold text-green-600 border border-green-100 shadow-xs">
-                        <FiCheck size={14} /> Linked
+                        <FiCheck size={14} /> {statusLabel}
+                     </div>
+                   ) : statusTone === 'yellow' ? (
+                     <div className="flex items-center gap-2 rounded-full bg-yellow-50 px-4 py-1.5 text-xs font-bold text-yellow-700 border border-yellow-100 shadow-xs">
+                        <FiRefreshCw size={14} className="animate-spin" /> {statusLabel}
+                     </div>
+                   ) : statusTone === 'red' ? (
+                     <div className="flex items-center gap-2 rounded-full bg-red-50 px-4 py-1.5 text-xs font-bold text-red-600 border border-red-100 shadow-xs">
+                        <FiAlertCircle size={14} /> {statusLabel}
                      </div>
                    ) : (
                      <div className="flex items-center gap-2 rounded-full bg-black/5 px-4 py-1.5 text-xs font-bold text-charcoal/40 border border-black/5">
-                        Disconnected
+                        {statusLabel}
                      </div>
                    )}
                 </div>
                 <p className="text-base leading-relaxed text-charcoal/50 font-medium">
-                  When linked, Avento will automatically provision a unique Zoom
-                  meeting for every &quot;Online&quot; event and sync the guest join details in real-time.
+                  Connect your Zoom account once and Avento will automatically provision meetings for online events,
+                  refresh tokens when needed, and keep the meeting link in sync.
                 </p>
+                {!zoomConnected && (zoomStatus === 'expired' || zoomStatus === 'revoked') && (
+                  <p className="text-sm font-medium text-red-600">
+                    Zoom connection expired or was revoked. Please reconnect.
+                  </p>
+                )}
+                {zoomLastError && !zoomConnected && (
+                  <p className="text-sm font-medium text-charcoal/50">
+                    Zoom failed: {zoomError || zoomLastError}
+                  </p>
+                )}
+                {!zoomConnected && zoomStatus === 'disconnected' && (
+                  <p className="text-sm font-medium text-charcoal/50">
+                    Zoom is not connected yet. Use the button to connect your account.
+                  </p>
+                )}
               </div>
 
-              <div className="flex justify-start lg:justify-end">
-                {zoomStatus === 'synced' ? (
-                  <>
+              <div className="flex flex-col items-start lg:items-end gap-4">
+                {zoomDisplayName || zoomEmail ? (
+                  <div className="rounded-2xl border border-black/5 bg-black/5 p-4 text-left lg:text-right">
+                    <p className="text-xs font-bold uppercase tracking-widest text-charcoal/30">Connected Zoom Account</p>
+                    <p className="mt-1 text-lg font-bold text-charcoal">{connectedAccountName}</p>
+                    {zoomEmail && <p className="text-sm text-charcoal/50">{zoomEmail}</p>}
+                    {tokenExpiryLabel && zoomConnected && (
+                      <p className="mt-2 text-xs font-medium text-charcoal/40">Token refreshes automatically. Expires around {tokenExpiryLabel}</p>
+                    )}
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-3 justify-start lg:justify-end">
+                  {showReconnect ? (
                     <button
-                      onClick={() => setDisconnectConfirm(true)}
+                      onClick={handleZoomConnect}
+                      disabled={actionLoading}
+                      className="h-14 px-10 rounded-2xl bg-amber-500 text-white font-bold shadow-lg hover:bg-amber-600 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      Reconnect Zoom
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleZoomConnect}
+                      disabled={actionLoading}
+                      className="h-14 px-10 rounded-2xl bg-charcoal text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      Connect Zoom
+                    </button>
+                  )}
+
+                  {zoomConnected && (
+                    <button
+                      onClick={handleZoomDisconnect}
                       disabled={actionLoading}
                       className="h-14 px-10 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      {actionLoading ? 'Disconnecting...' : 'Disconnect'}
+                      {actionLoading ? 'Disconnecting...' : 'Disconnect Zoom'}
                     </button>
-                    <ConfirmModal
-                      isOpen={disconnectConfirm}
-                      title="Disconnect Zoom"
-                      message="Are you sure you want to disconnect Zoom? This will stop future automatic meeting creation."
-                      isDanger={true}
-                      confirmText="Disconnect"
-                      onCancel={() => setDisconnectConfirm(false)}
-                      onConfirm={handleZoomDisconnect}
-                    />
-                  </>
-                ) : (
-                  <button
-                    onClick={handleZoomConnect}
-                    disabled={actionLoading}
-                    className="h-14 px-10 rounded-2xl bg-charcoal text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/20 transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    {actionLoading ? 'Connecting...' : 'Link Zoom Account'}
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>

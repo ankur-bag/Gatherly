@@ -13,57 +13,40 @@ export async function GET(req: Request) {
     }
 
     const user = await UserController.getByClerkId(userId)
-    const isSynced = Boolean(user.zoomAccountId && user.zoomClientId && user.zoomClientSecret)
-    
-    return NextResponse.json({ status: isSynced ? 'synced' : 'pending' })
+    const connected = Boolean(user.zoomConnected)
+
+    return NextResponse.json({
+      connected,
+      status: user.zoomConnectionStatus || (connected ? 'connected' : 'disconnected'),
+      zoomEmail: user.zoomEmail || null,
+      zoomDisplayName: user.zoomDisplayName || null,
+      zoomTokenExpiry: user.zoomTokenExpiry || null,
+      zoomError: user.zoomError || null,
+      zoomLastError: user.zoomLastError || null,
+    })
   } catch (error: any) {
     console.error('GET /api/settings/zoom error:', error)
     if (error.message === 'Not found') {
-      return NextResponse.json({ status: 'pending' })
+      return NextResponse.json({
+        connected: false,
+        status: 'disconnected',
+        zoomEmail: null,
+        zoomDisplayName: null,
+        zoomTokenExpiry: null,
+        zoomError: null,
+        zoomLastError: null,
+      })
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: Request) {
-  try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await req.json()
-    
-    if (body.action === 'connect') {
-      const zoomAccountId = process.env.ZOOM_ACCOUNT_ID || ''
-      const zoomClientId = process.env.ZOOM_CLIENT_ID || ''
-      const zoomClientSecret = process.env.ZOOM_CLIENT_SECRET || ''
-
-      if (!zoomAccountId || !zoomClientId || !zoomClientSecret) {
-        return NextResponse.json(
-          { error: 'Zoom environment variables are missing. Please configure ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, and ZOOM_CLIENT_SECRET.' },
-          { status: 400 }
-        )
-      }
-
-      await UserController.updateSettings(userId, {
-        zoomAccountId,
-        zoomClientId,
-        zoomClientSecret,
-      })
-      return NextResponse.json({ status: 'synced' })
-    } else if (body.action === 'disconnect') {
-      await UserController.updateSettings(userId, {
-        zoomAccountId: '',
-        zoomClientId: '',
-        zoomClientSecret: '',
-      })
-      return NextResponse.json({ status: 'pending' })
-    }
-    
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-  } catch (error: any) {
-    console.error('POST /api/settings/zoom error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+  return NextResponse.json(
+    {
+      error:
+        'Manual connect/disconnect is disabled. Configure Zoom credentials via environment variables.',
+    },
+    { status: 405 }
+  )
 }
