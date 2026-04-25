@@ -34,7 +34,7 @@ export default function BaseLayout({
 
           <Section style={header}>
             <Text style={brandPill}>AVENTO</Text>
-            <Text style={eyebrow}>Event management made lighter</Text>
+            <Text style={eyebrow}>Event management made easier</Text>
           </Section>
 
           <Section style={contentBox}>
