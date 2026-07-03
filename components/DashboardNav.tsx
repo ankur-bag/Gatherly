@@ -7,6 +7,7 @@ import { FiHome, FiSettings, FiGrid, FiPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 const navItems = [
+  { href: "/", label: "Home", Icon: FiHome },
   { href: "/dashboard", label: "Dashboard", Icon: FiGrid },
   { href: "/dashboard/settings", label: "Settings", Icon: FiSettings },
 ];
@@ -15,6 +16,7 @@ export default function DashboardNav() {
   const pathname = usePathname();
 
   function isActive(path: string) {
+    if (path === "/") return pathname === "/";
     if (path === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(path);
   }
