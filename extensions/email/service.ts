@@ -1,8 +1,8 @@
 import { render } from '@react-email/render'
-import nodemailer from 'nodemailer'
+import nodemailer, { type Transporter } from 'nodemailer'
 import { IRegistration, IEvent } from '@/types'
 
-let _transporter: nodemailer.Transporter | null = null
+let _transporter: Transporter | null = null
 
 function getTransporter() {
   if (!_transporter) {
