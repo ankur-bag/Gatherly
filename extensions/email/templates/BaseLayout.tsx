@@ -33,7 +33,7 @@ export default function BaseLayout({
           <Section style={topAccent} />
 
           <Section style={header}>
-            <Text style={brandPill}>AVENTO</Text>
+            <Text style={brandPill}>GATHERLY</Text>
             <Text style={eyebrow}>Event management made easier</Text>
           </Section>
 
@@ -45,10 +45,10 @@ export default function BaseLayout({
 
           <Section style={footer}>
             <Text style={footerContent}>
-              {footerText || 'You received this email because you registered for an event on Avento.'}
+              {footerText || 'You received this email because you registered for an event on Gatherly.'}
             </Text>
             <Hr style={hr} />
-            <Text style={copyright}>© 2026 Avento. All rights reserved.</Text>
+            <Text style={copyright}>© 2026 Gatherly. All rights reserved.</Text>
           </Section>
         </Container>
       </Body>

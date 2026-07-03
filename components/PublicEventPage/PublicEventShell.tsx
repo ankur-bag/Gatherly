@@ -21,10 +21,10 @@ export function PublicEventShell({ children }: PublicEventShellProps) {
           </Link>
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center">
-              <Image src="/avento.svg" alt="Avento Logo" width={28} height={28} className="object-contain" />
+              <Image src="/gatherly.svg" alt="Gatherly Logo" width={28} height={28} className="object-contain" />
             </div>
             <span className="text-lg font-medium tracking-tight text-charcoal" style={{ fontFamily: 'var(--font-display)' }}>
-              Avento
+              Gatherly
             </span>
           </div>
         </nav>

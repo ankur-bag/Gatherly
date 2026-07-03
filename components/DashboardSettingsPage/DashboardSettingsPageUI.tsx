@@ -181,7 +181,7 @@ export function DashboardSettingsPageUI() {
                    )}
                 </div>
                 <p className="text-base leading-relaxed text-charcoal/50 font-medium">
-                  Connect your Zoom account once and Avento will automatically provision meetings for online events,
+                  Connect your Zoom account once and Gatherly will automatically provision meetings for online events,
                   refresh tokens when needed, and keep the meeting link in sync.
                 </p>
                 {!zoomConnected && (zoomStatus === 'expired' || zoomStatus === 'revoked') && (

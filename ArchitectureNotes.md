@@ -52,6 +52,6 @@ Registration mode is part of the event itself. In open mode, new registrations a
 
 ## Email Flow
 
-Email is implemented as an extension layer, not inside routes or models. Controllers fire hooks such as `registration.created`, `registration.approved`, `registration.rejected`, `registration.revoked`, `event.updated`, and `event.cancelled`. The email extension listens to those hooks and renders React Email templates through Resend. Failures are logged and swallowed so a bad email send does not block the organizer action.
+Email is implemented as an extension layer, not inside routes or models. Controllers fire hooks such as `registration.created`, `registration.approved`, `registration.rejected`, `registration.revoked`, `event.updated`, and `event.cancelled`. The email extension listens to those hooks and renders React Email templates through Nodemailer. Failures are logged and swallowed so a bad email send does not block the organizer action.
 
 Zoom follows the same pattern: event publish, update, and cancellation hooks trigger Zoom meeting creation, patching, and cleanup without coupling the API routes to the Zoom service directly.

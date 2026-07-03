@@ -155,7 +155,7 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
             className="text-[10px] text-white/90 sm:text-lg md:text-2xl leading-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Avento is a powerful event management platform where organizers create, manage, and scale events with precision. Bridge physical and digital experiences seamlessly with built-in Zoom integration and total control.
+            Gatherly is a powerful event management platform where organizers create, manage, and scale events with precision. Bridge physical and digital experiences seamlessly with built-in Zoom integration and total control.
           </motion.p>
         </div>
 
@@ -165,10 +165,10 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
             
             <div className="col-span-12 lg:col-span-8">
               <h1
-                className="font-medium leading-[0.8] tracking-[-0.07em] text-[24vw] sm:text-[22vw] md:text-[20vw] lg:text-[18vw]"
+                className="font-medium leading-[0.8] mb-5 tracking-[-0.07em] text-[20vw] sm:text-[22vw] md:text-[20vw] lg:text-[18vw]"
                 style={{ color: "#E1E0CC" }}
               >
-                <WordsPullUp text="Avento" showAsterisk />
+                <WordsPullUp text="Gatherly."  showAsterisk />
               </h1>
             </div>
 

@@ -9,18 +9,18 @@ interface PublicEventRouteProps {
 
 export async function generateMetadata({ params }: PublicEventRouteProps): Promise<Metadata> {
   const { id } = await params
-  
+
   try {
     await dbConnect()
     const event = await Event.findById(id)
 
     if (!event) {
-      return { title: 'Event Not Found | Avento' }
+      return { title: 'Event Not Found | Gatherly' }
     }
 
-    const title = `${event.title} — Avento`
+    const title = `${event.title} - Gatherly`
     const description = event.description.substring(0, 160).replace(/[#*`]/g, '') + '...'
-    
+
     return {
       title,
       description,
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PublicEventRouteProps): Promi
         description,
         type: 'article',
         publishedTime: event.createdAt?.toISOString(),
-        authors: ['Avento Organizer'],
+        authors: ['Gatherly Organizer'],
       },
       twitter: {
         card: 'summary_large_image',
@@ -37,8 +37,8 @@ export async function generateMetadata({ params }: PublicEventRouteProps): Promi
         description,
       }
     }
-  } catch (error) {
-    return { title: 'Event | Avento' }
+  } catch {
+    return { title: 'Event | Gatherly' }
   }
 }
 

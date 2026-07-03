@@ -1,24 +1,32 @@
 import { render } from '@react-email/render'
-import { Resend } from 'resend'
-import { IRegistration, IEvent, IUser } from '@/types'
+import nodemailer from 'nodemailer'
+import { IRegistration, IEvent } from '@/types'
 
-let _resend: Resend | null = null
+let _transporter: nodemailer.Transporter | null = null
 
-function getResend() {
-  if (!_resend) {
-    if (!process.env.RESEND_API_KEY) {
-      console.error('[Resend] Missing RESEND_API_KEY in environment')
+function getTransporter() {
+  if (!_transporter) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      throw new Error('[Nodemailer] Missing EMAIL_USER or EMAIL_PASS in environment')
     }
-    _resend = new Resend(process.env.RESEND_API_KEY)
+
+    _transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    })
   }
-  return _resend
+
+  return _transporter
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Avento.ai <no-reply@yourdomain.com>'
+const FROM_EMAIL = process.env.EMAIL_FROM || `Gatherly <${process.env.EMAIL_USER || 'no-reply@yourdomain.com'}>`
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
-    const response = await getResend().emails.send({
+    const response = await getTransporter().sendMail({
       from: FROM_EMAIL,
       to,
       subject,
@@ -129,7 +137,7 @@ export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
 
     // Send to all registered attendees
     await Promise.allSettled(
-      registrations.map((reg: any) =>
+      registrations.map((reg: IRegistration) =>
         sendEmail(reg.attendeeEmail, `${event.title} details have changed`, html)
       )
     )
@@ -155,7 +163,7 @@ export async function sendEventCancelled(event: IEvent) {
 
     // Send to all registered attendees
     await Promise.allSettled(
-      registrations.map((reg: any) =>
+      registrations.map((reg: IRegistration) =>
         sendEmail(reg.attendeeEmail, `${event.title} has been cancelled`, html)
       )
     )

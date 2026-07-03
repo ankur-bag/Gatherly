@@ -1,14 +1,14 @@
-# GoAvo Mini-Avento
+# GoAvo Mini-Gatherly
 
 <p align="center">
   <img src="https://i.postimg.cc/Ssm246y8/Whats-App-Image-2026-04-25-at-6-35-55-PM.jpg" width="100%" />
 </p>
 
- Live Website: https://goavo-avento.vercel.app/
+ Live Website: https://gatherlyy.vercel.app/
  
  Demo Video: https://www.youtube.com/watch?v=qZguSi5Vh_w
 
-Avento is a full-stack event management platform built with Next.js that enables organizers to create events, manage RSVPs, and seamlessly sync online events with Zoom.
+Gatherly is a full-stack event management platform built with Next.js that enables organizers to create events, manage RSVPs, and seamlessly sync online events with Zoom.
 
 ## Tech Stack
 
@@ -18,7 +18,7 @@ Avento is a full-stack event management platform built with Next.js that enables
 - Tailwind CSS v4
 - Clerk for authentication and route protection
 - MongoDB with Mongoose
-- Resend and React Email for transactional email
+- Nodemailer and React Email for transactional email
 - Zoom User OAuth + extension hooks for meeting sync
 
 ## Setup
@@ -54,8 +54,9 @@ Required variables:
 - `NEXT_PUBLIC_CLERK_SIGN_UP_URL`
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL`
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL`
-- `RESEND_API_KEY`
-- `RESEND_FROM_EMAIL`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `EMAIL_FROM`
 - `ZOOM_CLIENT_ID`
 - `ZOOM_CLIENT_SECRET`
 
@@ -74,7 +75,7 @@ Optional but useful:
 - Zoom connect/disconnect is managed through OAuth routes, and token lifecycle is handled in the Zoom service layer.
 - Online event launch is guarded in the create UI: organizers must connect Zoom first before publishing online events.
 - Zoom failures are captured in `zoomSyncStatus` and `zoomError` instead of breaking organizer workflows.
-- Email delivery uses Resend. If delivery fails, the app logs the error and continues.
+- Email delivery uses Nodemailer. If delivery fails, the app logs the error and continues.
 
 ## Feature Checklist
 
@@ -105,7 +106,7 @@ Optional but useful:
 - Search, filtering, approve, reject, revoke, and bulk actions are supported.
 
 07. Email Notifications - implemented
-- Resend sends transactional emails for registration received, approved, rejected, revoked, event updated, and event cancelled.
+- Nodemailer sends transactional emails for registration received, approved, rejected, revoked, event updated, and event cancelled.
 - Extension failures are caught and logged so they do not break the client request.
 
 08. Capacity Rules - implemented

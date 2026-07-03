@@ -25,8 +25,8 @@ export default function DashboardSidebar() {
       <div className="flex items-center gap-3 px-4 py-6 border-b border-black/5 mb-6">
         <div className="flex h-10 w-10 items-center justify-center">
           <Image 
-            src="/avento.svg" 
-            alt="Avento Logo" 
+            src="/gatherly.svg" 
+            alt="Gatherly Logo" 
             width={40} 
             height={40}
             className="object-contain drop-shadow-sm"
@@ -34,7 +34,7 @@ export default function DashboardSidebar() {
         </div>
         <div className="flex flex-col">
           <p className="text-lg font-medium text-charcoal leading-none" style={{ fontFamily: 'var(--font-display)' }}>
-            Avento
+            Gatherly
           </p>
           <span className="text-[10px] uppercase font-bold tracking-widest text-black/30 mt-1">Operator</span>
         </div>

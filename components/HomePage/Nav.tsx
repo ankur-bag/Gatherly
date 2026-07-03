@@ -62,8 +62,8 @@ export function Nav({ isSignedIn }: NavProps) {
             >
               <div className="flex h-9 w-9 items-center justify-center">
                 <Image 
-                  src="/avento.svg" 
-                  alt="Avento Logo" 
+                  src="/gatherly.svg" 
+                  alt="Gatherly Logo" 
                   width={36} 
                   height={36}
                   className="object-contain drop-shadow-sm"
@@ -73,7 +73,7 @@ export function Nav({ isSignedIn }: NavProps) {
                 className="text-3xl tracking-tight text-charcoal"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Avento
+                Gatherly
               </span>
             </Link>
 

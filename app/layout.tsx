@@ -18,13 +18,13 @@ import type { Viewport } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "Avento — High-Fidelity Event Management",
-    template: "%s | Avento"
+    default: "Gatherly - High-Fidelity Event Management",
+    template: "%s | Gatherly"
   },
   description:
     "A powerful event management platform where organizers create, manage, and scale events with precision. Bridge physical and digital experiences seamlessly.",
   icons: {
-    icon: "/avento.svg",
+    icon: "/gatherly.svg",
   },
 };
 
