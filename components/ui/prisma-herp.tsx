@@ -169,7 +169,7 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
             
             <div className="col-span-12 lg:col-span-8">
               <h1
-                className="font-medium leading-[0.8] mb-10 tracking-[-0.07em] text-[20vw] sm:text-[18vw] md:text-[20vw] lg:text-[15vw]"
+                className="font-medium leading-[0.8] mb-10 tracking-[-0.07em] text-[20vw] sm:text-[20vw] md:text-[20vw] lg:text-[20vw]"
                 style={{ color: "#E1E0CC", fontFamily: "var(--font-display)" }}
               >
                 <WordsPullUp text="Gatherly."  showAsterisk />
