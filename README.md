@@ -1,12 +1,11 @@
-# GoAvo Mini-Gatherly
+# Gatherly
 
 <p align="center">
-  <img src="https://i.postimg.cc/Ssm246y8/Whats-App-Image-2026-04-25-at-6-35-55-PM.jpg" width="100%" />
+  <img src="/public/gatherly.png" width="100%" />
 </p>
 
  Live Website: https://gatherlyy.vercel.app/
  
- Demo Video: https://www.youtube.com/watch?v=qZguSi5Vh_w
 
 Gatherly is a full-stack event management platform built with Next.js that enables organizers to create events, manage RSVPs, and seamlessly sync online events with Zoom.
 
