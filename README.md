@@ -1,7 +1,7 @@
 # Gatherly
 
 <p align="center">
-  <img src="/public/gatherly.png" width="100%" />
+  <img src="https://i.postimg.cc/qMczJVg5/gatherly.jpg" width="100%" />
 </p>
 
  Live Website: https://gatherlyy.vercel.app/
