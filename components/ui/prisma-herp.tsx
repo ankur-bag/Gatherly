@@ -19,7 +19,11 @@ export const WordsPullUp = ({ text, className = "", showAsterisk = false, style 
   const words = text.split(" ");
 
   return (
-    <div ref={ref} className={`inline-flex flex-wrap ${className}`} style={style}>
+    <div
+      ref={ref}
+      className={`inline-flex flex-wrap font-display ${className}`}
+      style={{ fontFamily: "var(--font-display)", ...style }}
+    >
       {words.map((word, i) => {
         const isLast = i === words.length - 1;
         return (
@@ -165,8 +169,8 @@ const PrismaHero = ({ isSignedIn = false }: { isSignedIn?: boolean }) => {
             
             <div className="col-span-12 lg:col-span-8">
               <h1
-                className="font-medium leading-[0.8] mb-5 tracking-[-0.07em] text-[20vw] sm:text-[22vw] md:text-[20vw] lg:text-[18vw]"
-                style={{ color: "#E1E0CC" }}
+                className="font-medium leading-[0.8] mb-10 tracking-[-0.07em] text-[13vw] sm:text-[18vw] md:text-[13vw] lg:text-[15vw]"
+                style={{ color: "#E1E0CC", fontFamily: "var(--font-display)" }}
               >
                 <WordsPullUp text="Gatherly."  showAsterisk />
               </h1>

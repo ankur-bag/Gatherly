@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { bootstrap } from '@/lib/bootstrap'
 import * as RegistrationController from '@/controllers/RegistrationController'
 
+export const runtime = 'nodejs'
+
 bootstrap()
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

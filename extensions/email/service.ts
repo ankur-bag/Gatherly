@@ -4,25 +4,66 @@ import { IRegistration, IEvent } from '@/types'
 
 let _transporter: Transporter | null = null
 
-function getTransporter() {
-  if (!_transporter) {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      throw new Error('[Nodemailer] Missing EMAIL_USER or EMAIL_PASS in environment')
+function parseBoolean(value: string | undefined, defaultValue: boolean) {
+  if (value === undefined) return defaultValue
+  return value.toLowerCase() === 'true'
+}
+
+function getMailConfig() {
+  const smtpHost = process.env.SMTP_HOST
+  const smtpPort = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined
+  const smtpSecure = parseBoolean(process.env.SMTP_SECURE, smtpPort === 465)
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS
+
+  if (smtpHost) {
+    if (!smtpUser || !smtpPass) {
+      throw new Error('[Email] Missing SMTP_USER/SMTP_PASS (or EMAIL_USER/EMAIL_PASS) for custom SMTP transport')
     }
 
-    _transporter = nodemailer.createTransport({
+    return {
+      transportLabel: `smtp:${smtpHost}`,
+      options: {
+        host: smtpHost,
+        port: smtpPort ?? 587,
+        secure: smtpSecure,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      },
+    }
+  }
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('[Email] Missing EMAIL_USER or EMAIL_PASS in environment')
+  }
+
+  return {
+    transportLabel: 'gmail',
+    options: {
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-    })
+    },
+  }
+}
+
+function getTransporter() {
+  if (!_transporter) {
+    const config = getMailConfig()
+    _transporter = nodemailer.createTransport(config.options)
+    console.log(`[Email] Transport initialized using ${config.transportLabel}`)
   }
 
   return _transporter
 }
 
-const FROM_EMAIL = process.env.EMAIL_FROM || `Gatherly <${process.env.EMAIL_USER || 'no-reply@yourdomain.com'}>`
+const FROM_EMAIL =
+  process.env.EMAIL_FROM ||
+  `Gatherly <${process.env.SMTP_USER || process.env.EMAIL_USER || 'no-reply@yourdomain.com'}>`
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
@@ -32,10 +73,10 @@ async function sendEmail(to: string, subject: string, html: string) {
       subject,
       html,
     })
-    console.log(`Email to ${to} sent successfully:`, JSON.stringify(response, null, 2))
+    console.log(`[Email] Sent "${subject}" to ${to}:`, JSON.stringify(response, null, 2))
   } catch (error) {
-    console.error('Failed to send email:', error)
-    // Don't throw — extensions should never throw to client
+    console.error(`[Email] Failed to send "${subject}" to ${to}:`, error)
+    // Do not throw; registration flows should still succeed even if delivery fails.
   }
 }
 
@@ -120,7 +161,6 @@ export async function sendRevoked(registration: IRegistration, event: IEvent) {
 
 export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
   try {
-    // Get all registered attendees
     const Registration = (await import('@/models/Registration').then((m) => m.default))
     const EventUpdated = (await import('./templates/EventUpdated').then((m) => m.default))
     const registrations = await Registration.find({
@@ -135,7 +175,6 @@ export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
       })
     )
 
-    // Send to all registered attendees
     await Promise.allSettled(
       registrations.map((reg: IRegistration) =>
         sendEmail(reg.attendeeEmail, `${event.title} details have changed`, html)
@@ -148,7 +187,6 @@ export async function sendEventUpdated(event: IEvent, changedFields: string[]) {
 
 export async function sendEventCancelled(event: IEvent) {
   try {
-    // Get all registrations for the event, regardless of status
     const Registration = (await import('@/models/Registration').then((m) => m.default))
     const EventCancelled = (await import('./templates/EventCancelled').then((m) => m.default))
     const registrations = await Registration.find({
@@ -161,7 +199,6 @@ export async function sendEventCancelled(event: IEvent) {
       })
     )
 
-    // Send to all registered attendees
     await Promise.allSettled(
       registrations.map((reg: IRegistration) =>
         sendEmail(reg.attendeeEmail, `${event.title} has been cancelled`, html)
@@ -181,7 +218,7 @@ export async function sendEventReminder(registration: IRegistration, event: IEve
         eventTitle: event.title,
         eventDateTime: new Date(event.dateTime).toLocaleString(),
         venueOrJoinUrl: event.isOnline ? (event.zoomJoinUrl || 'Zoom link pending') : (event.venue || 'TBA'),
-        isOnline: event.isOnline
+        isOnline: event.isOnline,
       })
     )
     await sendEmail(registration.attendeeEmail, `Reminder: ${event.title} is starting in 24 hours!`, html)

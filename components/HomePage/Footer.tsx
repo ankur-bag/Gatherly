@@ -17,7 +17,7 @@ export function Footer() {
                 <Image src="/gatherly.svg" alt="Gatherly Logo" width={44} height={44} className="object-contain" />
               </div>
               <span 
-                className="text-3xl  text-white" 
+                className="text-2xl  text-white mb-10" 
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 Gatherly
@@ -45,7 +45,7 @@ export function Footer() {
 
         {/* Massive Decorative Text */}
         <div className="mt-32 pointer-events-none select-none flex justify-center overflow-hidden">
-          <h2 className="text-[20vw] leading-none font-display text-[#E1E0CC] text-center tracking-tighter">
+          <h2 className="text-[16vw] leading-none font-display text-[#E1E0CC] text-center tracking-tighter">
             <WordsPullUp text="Gatherly" showAsterisk />
           </h2>
         </div>

@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { bootstrap } from '@/lib/bootstrap'
 import * as EventController from '@/controllers/EventController'
 
+export const runtime = 'nodejs'
+
 bootstrap()
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {

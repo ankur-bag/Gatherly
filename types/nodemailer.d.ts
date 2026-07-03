@@ -15,6 +15,9 @@ declare module 'nodemailer' {
   }
 
   export interface CreateTransportOptions {
+    host?: string
+    port?: number
+    secure?: boolean
     service?: string
     auth?: {
       user?: string
